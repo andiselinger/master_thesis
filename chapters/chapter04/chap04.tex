@@ -1,35 +1,32 @@
 \chapter{Experiments and Results}
 \initial{T}his chapter summarizes the results of the experiments that were performed in the course of this thesis. All results were obtained by employing the Vienna Science Cluster 3 (VSC-3) that was described in Section~\ref{sec:vsc3}. 
 
-First the results of the matrix-matrix multiplication benchmarks are given, both for the sequential and the parallel case. For that, the newly implemented algorithms are analyzed in great detail and compared to other algorithms. Afterwards, the performance of methods that fall back on those multiplications are explored, i.e. an dissection of multigrid performance is given.
-
-
-
+First the results of the matrix-matrix multiplication benchmarks are given, both for the sequential and the parallel case. For that, the newly implemented algorithms are analyzed in detail and compared to other algorithms. Afterwards, the performance of a method that falls back on those multiplications is explored, i.e. a dissection of multigrid performance is given.
 
 \section{Sequential Matrix-Matrix Multiplication}
 
-In order to evaluate the performance of different sequential matrix-matrix multiplication implementations, the operation $C = AA$ was carried out on one processor core of the VSC-3. The matrix $A$ here is a matrix that could arise from a Poisson equation when using one of various different stencils and a specific grid size. Since there is a row in the matrix for each element of the grid, a $20\times 20 \times 20$ grid yields a $20^3 \times 20^3$ matrix.
+In order to evaluate the performance of different sequential matrix-matrix multiplication implementations, the operation $C = AA$ was carried out on one processor core of the VSC-3. The matrix $A$ here is a matrix that could arise from a Poisson equation when using one of various stencils and a specific grid size. Since there is a row in the matrix for each element of the grid, a $20\times 20 \times 20$ grid for example yields a $20^3 \times 20^3$ matrix.
 
-\subsection{Determining the Best Intel Implementation}
-For the sequential matrix-matrix multiplication, the first thing that had to be evaluated was how the \textit{intel} algorithm should be used. As described in Chapter 3, this algorithm can actually be implemented in two ways: One way is to look for the column index in an array and add it only if it is not present yet, the other way is to use a bit array that indicates if the index has already been added. 
+\subsection{Determining the Best \textit{combined} Implementation}
+For the sequential matrix-matrix multiplication, the first thing that had to be evaluated was how the \textit{combined} algorithm should be used. As described in Chapter~3, this algorithm can actually be implemented in two ways: One way is to look for the column index in an array and add it only if it is not present yet, the other way is to use a bit array that indicates if the index has already been added. 
 
-Both implementations were benchmarked and compared to the \textit{sorted} algorithm, as shown in Fig.~\ref{fig:ex209_insert_append_3d19p}. The 3 dimensional 19 point stencil was used here and the intel algorithm results were normalized to the \textit{sorted} algorithm. 
+Both implementations were benchmarked and compared to the \textit{sorted} algorithm, as shown in Fig.~\ref{fig:ex209_insert_append_3d19p}. The 3 dimensional 19 point stencil was used here and the \textit{combined} algorithm results were normalized to the \textit{sorted} algorithm. 
 
-For this experiment, the \textit{intel} algorithm with \texttt{appendToArray()} delivers almost the same performance as the \textit{sorted} algorithm, with a very low correlation between grid size and normalized execution time of the \textit{intel} algorithm. On the other hand, the \texttt{insertInArray()} version, performs much poorer than the other implementations. Here, the fact that an index of the array is searched in each iteration is reflected in the results; it needs around twice the amount of time. Since the \texttt{appendToArray()} version performs so much better, the other \textit{intel} algorithm version was not further used for benchmarks.
+For this experiment, the \textit{combined} algorithm with \texttt{appendToArray()} delivers almost the same performance as the \textit{sorted} algorithm, with a low correlation between grid size and normalized execution time of the \textit{combined} algorithm. On the other hand, the \texttt{insertInArray()} version, performs much poorer than the other implementations. Here, the fact that an index of the array is searched in each iteration is reflected in the results; it needs around twice the amount of time. Since the \texttt{appendToArray()} version performs so much better, the other \textit{combined} algorithm version was not further used for benchmarks.
 
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth, trim={0 2.cm 0 7cm},clip]{seq_insert_append}
-	\caption{Sequential MatMatMult(): The two different implementations of the \textit{intel} algorithm are compared to the \textit{sorted} algorithm of the sequential matrix-matrix multiplication for different grid sizes.} 
+	\caption{Sequential MatMatMult(): The two different implementations of the \textit{combined} algorithm are compared to the \textit{sorted} algorithm of the sequential matrix-matrix multiplication for different grid sizes.} 
 	\label{fig:ex209_insert_append_3d19p}
 \end{figure}
 
 \subsection{Different Stencils}
-Next, the matrix-matrix multiplication is evaluated by using different implementations (which were described in Chapter 3) and different stencils (see Fig.~\ref{fig:ex209_R}). For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. 
+Next, the matrix-matrix multiplication was evaluated by using different implementations (which were described in Chapter 3) and different stencils (see Fig.~\ref{fig:ex209_R}). For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. 
 
-As can be seen, the newly implemented \textit{intel} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{intel} algorithm is very often around 10-20\% faster than the sorted algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil.% and picking either of them will probably not end in a catastrophe. 
+As can be seen, the newly implemented \textit{combined} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{combined} algorithm is very often around 10-20\% faster than the sorted algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil.% and picking either of them will probably not end in a catastrophe. 
 
-%That means that if the rows that have to be merged contain many non-zeros, the Intel algorithm should be used, while the \textit{rowmerge} algorithm is better suited for rows with few non-zeros.
+%That means that if the rows that have to be merged contain many non-zeros, the combined algorithm should be used, while the \textit{rowmerge} algorithm is better suited for rows with few non-zeros.
 
 
 % ex 209
@@ -44,7 +41,7 @@ As can be seen, the newly implemented \textit{intel} algorithm (with \texttt{app
 
 In the previous experiment, the grid size was fixed and the results of different stencils were shown. Now, the performance is evaluated for a certain stencil and different grid sizes. 
 
-First, we take a look at the performance when using the small 2d, 5 point stencil (see Fig.~\ref{fig:seq2d5point}). This means the matrix $A$ has only 5 non-zeros per row (out of $\approx 67$ million entries per row for the largest tested grid). As can be seen, the \textit{rowmerge2} algorithm suits this problem best, needing only half of the time the \textit{sorted} algorithm needs. The \textit{intel} algorithm performs moderately and is slightly better than the \textit{sorted} algorithm. In general, we observe that the ranking of the different algorithms is more or less the same for small and large grids and also the execution time ratios do not change very much. Only the \textit{btheap} algorithm shows big variations in performance.
+First, we take a look at the performance when using the small 2d, 5 point stencil (see Fig.~\ref{fig:seq2d5point}). This means the matrix $A$ has only 5 non-zeros per row (out of $\approx 67$ million entries per row for the largest tested grid). As can be seen, the \textit{rowmerge2} algorithm suits this problem best, needing only half of the time the \textit{sorted} algorithm needs. The \textit{combined} algorithm performs moderately and is slightly better than the \textit{sorted} algorithm. In general, we observe that the ranking of the different algorithms is more or less the same for small and large grids and also the execution time ratios do not change very much. Only the \textit{btheap} algorithm shows big variations in performance.
 
 \begin{figure}[tbp]
 	\centering
@@ -53,9 +50,7 @@ First, we take a look at the performance when using the small 2d, 5 point stenci
 	\label{fig:seq2d5point}
 \end{figure}
 
-The same evaluation is now done with a big stencil, the 3d, 27 point stencil (see Fig.~\ref{fig:seq3d27point}). This means there are now 27 non-zeros per row (out of 1.7 million entries per row for the largest grid). Now the situation changed quite a lot: The two \textit{rowmerge} algorithms are not the best choice any more and especially the scalable algorithm, which delivered a quite good performance before, now performs very poor: The \textit{rowmerge} algorithms now need around 25\% more time than the sorted algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. After all, the \textit{scalable} algorithm is not as scalable as the name suggests. The \textit{intel} algorithm however, proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
-
-
+The same evaluation is now done with a medium sized stencil, the 2d, 13 point stencil (see Fig.~\ref{fig:seq2d13point}). This means there are now 13 non-zeros per row (out of 4 million entries per row for the largest grid). Now the situation changed quite a lot: The two \textit{rowmerge} algorithms are not always the best choice any more and especially the \textit{scalable} algorithm, which delivered a quite good performance before, now performs very poor: For all tested grids, it is about 1.7 times slower than the sored algorithm. Now the differences between the \textit{sorted}, the \textit{combined} and the \textit{rowmerge} algorithms are very low, so any of them is a reasonable choice for this stencil. Only for the $1000 \times 1000$ grid, the \textit{combined} algorithm is much faster (ca. 10\%) than the \textit{sorted} algorithm.
 
 \begin{figure}[tbp]
 	\centering
@@ -64,6 +59,9 @@ The same evaluation is now done with a big stencil, the 3d, 27 point stencil (se
 	\label{fig:seq2d13point}
 \end{figure}
 
+
+When using a big stencil, the 3d, 27 point stencil, there are 27 non-zeros per row (out of 1.7 million entries per row for the largest grid). Now the trend of the scalable and the rowmerge algorithms continues (see Fig.~\ref{fig:seq3d27point}). The \textit{rowmerge} algorithms now need around 25\% more time than the \textit{sorted} algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. After all, the \textit{scalable} algorithm is not as scalable as the name suggests. The \textit{combined} algorithm however, proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
+
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=1.05\textwidth, trim={0 7.3cm 0 1cm},clip]{seq_3d27point}
@@ -71,15 +69,17 @@ The same evaluation is now done with a big stencil, the 3d, 27 point stencil (se
 	\label{fig:seq3d27point}
 \end{figure}
 
+We conclude this section by noting that the selected stencil has a much bigger impact on the ranking of the algorithms than the grid size. For small stencils, the \textit{rowmerge2} algorithm proves to be the best choice, as it needs only half the time the sorted algorithm needs for some test cases. On the other hand, it performs quite poor (up to 40\% slower than sorted) for some big stencils and most often, \textit{rowmerge} is around 5-10\% faster than \textit{rowmerge2}. The newly implemented \textit{combined} algorithm is a good choice for most stencils with a performance that is slightly better than the \textit{sorted} performance for many cases. This is only topped by the \textit{rowmerge} algorithms for small stencils. The \textit{bt heap} and the \textit{scalable} algorithms perform moderately for small stencils, but very poorly for big stencils. 
+
 \subsection{Time Ratio: Symbolic Calculation to Total Time}
 The matrix multiplication comprises two stages, a symbolic stage and a numeric stage. In order to see which stage should be further optimized, it was measured how much time is spent on each stage. Fig.~\ref{fig:seqsymnum} shows results for small, medium and big stencils, and for small and big grids. 
 
-Since there is no separation of different stages for the \textit{intel} algorithm, it is illustrated as 100\% for the symbolic part. What is very interesting here is that the time ratios for the stages depend only very little on the grid size and the stencil. The only big variation can be seen for the \textit{scalable\_fast} algorithm, where the ratio for the symbolic stage ranges from around 50\% for medium and big stencils to 80\% for small stencils. For the two \textit{rowmerge} algorithms, a positive correlation between the stencil size and the time ratio for the symbolic stage can be observed. Except for the two \textit{scalable} and the \textit{intel} algorithm, the symbolic stage takes around 80\% of the time. In conclusion, this data tells us that the numeric stage of the \textit{scalable\_fast} algorithm and the symbolic stage of the other algorithms are especially worth being optimized.
+Since there is no separation of different stages for the \textit{combined} algorithm, it is illustrated as 100\% for the symbolic part. What is very interesting here is that the time ratios for the stages depend only very little on the grid size and the stencil. The only big variation can be seen for the \textit{scalable\_fast} algorithm, where the ratio for the symbolic stage ranges from around 50\% for medium and big stencils to 80\% for small stencils. For the two \textit{rowmerge} algorithms, a positive correlation between the stencil size and the time ratio for the symbolic stage can be observed. Except for the two \textit{scalable} and the \textit{combined} algorithm, the symbolic stage takes around 80\% of the time. In conclusion, this data tells us that the numeric stage of the \textit{scalable\_fast} algorithm and the symbolic stage of the other algorithms are especially worth being optimized.
 
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=1.05\textwidth, trim={0 2.cm 0 6cm},clip]{seq_symnum}
-	\caption{Percentage of the symbolic stage of the matrix multiplication of the total execution time. The rest to 100\% is spent on the numeric stage. For the intel algorithm, everything is combined in one stage.} 
+	\caption{Percentage of the symbolic stage of the matrix multiplication of the total execution time. The rest to 100\% is spent on the numeric stage. For the combined algorithm, everything is combined in one stage.} 
 	\label{fig:seqsymnum}
 \end{figure}
 
@@ -154,9 +154,9 @@ In conclusion, we note that the non-scalable implementation is usually faster fo
 	\label{fig:mat_ex_test_ex2_times_3dlarge}
 \end{figure}
 
-\subsection{Time Division of the \textit{seq mpi} Implementation}
+\subsection{Time Division of the \textit{Sequential MPI} Implementation}
 
-Next the time consumption of different parts of the \textit{seq mpi} implementation is analyzed. For that, the algorithm was divided into 10 essential parts, which add up to 100\% of the symbolic calculation:
+Next the time consumption of different parts of the \textit{sequential MPI} implementation is analyzed. For that, the algorithm was divided into 10 essential sections, which add up to 100\% of the symbolic calculation:
 
 \begin{itemize}
 \item Memory allocations: This includes malloc(), calloc(), PetscNew() functions and the creation of the linked list.
@@ -171,9 +171,10 @@ Next the time consumption of different parts of the \textit{seq mpi} implementat
 \item Mat3: The symbolic multiplication $A_{\textrm{loc, off~}} B_{\textrm{nonloc}}$.
 \end{itemize}
 
-The percentages of each step are measured for different matrix sizes, stencils and numbers of processes. Fig.~\ref{fig:pie_256_10240} shows the results for a $10240 \times 10240$ grid with a 2d, 13 point stencil. The multiplication was performed on 16 nodes with 16 cores each, resulting in 256 processes. Rather surprisingly, only a third of the total time is spent on actual matrix multiplications. With a quarter of the total time, the matSetValue() routine needs much more time than one might expect. Also, the memory allocations needs around a quarter of the total time. 
+The percentages of each step are measured for different matrix sizes, stencils and numbers of processes and the results are given in the following.
 
-What is also very interesting here is the fact that only 2.1\% of the time is spent on getting non-local rows of $B$. That means if this function was to be implemented in an asynchronous way, i.e. the program would not wait with local multiplications until all non-local rows are obtained, the multiplication could only be 2.1\% faster, for this setup. 
+\subsubsection*{10240 $\times$ 10240, 256 cores}
+Fig.~\ref{fig:pie_256_10240} shows the results for a $10240 \times 10240$ grid with a 2d, 13 point stencil. The multiplication was performed on 16 nodes with 16 cores each, resulting in 256 processes. Rather surprisingly, only a third of the total time is spent on actual matrix multiplications. Since most matrix elements lie in the diagonal of the matrix, the multiplication $A_{\textrm{loc, diag}}~B_{\textrm{loc, diag}}$ needs much more time than the multiplications dealing with the few non-local elements. 
 
 \begin{figure}[tbp]
 	\centering
@@ -182,17 +183,46 @@ What is also very interesting here is the fact that only 2.1\% of the time is sp
 	\label{fig:pie_256_10240}
 \end{figure}
 
+The reason why $A_{\textrm{loc, diag~}} B_{\textrm{loc, off}}$ (Mat2) is much faster than $A_{\textrm{loc, off~}} B_{\textrm{nonloc}}$ (Mat3), is that the result matrix for Mat3 is much bigger than the one for Mat2. Their sizes are $N/p \times N/p$ for Mat2 and $(N-N/p) \times (N-N/p)$ for Mat3, with a global matrix size $N\times N$ and $p\geq2$ processes. The higher the number of processes is, the higher is this difference.
+
+With more than a quarter of the total time, the matSetValue() routine needs much more time than one might expect. Also, the memory allocations need around a quarter of the total time. 
+
+What is also very interesting here is the fact that only 2.1\% of the time is spent on getting non-local rows of $B$. That means if this function was to be implemented in an asynchronous way, i.e. the program does not wait with local multiplications until all non-local rows are obtained, the multiplication could only be 2.1\% faster, for this setup. 
+
+Other operations like merging the rows and preallocation only results in around 15\% of total time.
+
+
+
+\subsubsection*{5120 $\times$ 5120, 256 cores}
 If the size of the grid is reduced from $10240 \times 10240$ to $5120 \times 5120$ while all other option stay the same, the results from Fig.~\ref{fig:pie_256_5120} are obtained. There are a few things that changed considerably: 
 
-First, the share for time spent on getting the non-local rows of $B$ almost doubled (from 2.1\% to 4.1\%).
+First, the share for time spent on getting the non-local rows of $B$ almost doubled (from 2.1\% to 4.1\%). This can be explained with Fig.~\ref{fig:large_small}: The boundary nodes of the local part of a grid are connected to non-local grid points. When the number of boundary grid points halves, the number of non-local rows that have to be retrieved also halves, while the total number of grid points decreases by a factor 4. That means the time spent on calculations decreases by a factor 4, while the time spent on retrieving non-local rows decreases by a factor 2. So in combination, \textit{getBRows} gets a slice of pie that is twice the size of before. 
+
+The second share that changed a lot is the preallocation. This cannot be explained with the very nondeterministic behavior of the preallocation routines in PETSc (the time spent on this routines varies a lot), because the median of various measurements was taken. 
+
+Except for these two sections (getBRows and preallocation), the relative amounts of time spent on the other sections stays almost the same compared to the previous experiment.
 
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=1\textwidth, trim={0 3.cm 0 3cm},clip]{256cores_5120}
-	\caption{MatMatMult for a $5120 \times 5120$ grid, 256 cores, and a 2d, 13 point stencil. Compared to the previous case (Fig.~\ref{fig:pie_256_10240}), the preallocation and the getBRows operation changed a lot.} 
+	\caption{MatMatMult for a $5120 \times 5120$ grid, 256 cores, and a 2d, 13 point stencil. Compared to the previous case (Fig.~\ref{fig:pie_256_10240}), the preallocation and the \textit{getBRows} operation changed a lot.} 
 	\label{fig:pie_256_5120}
 \end{figure}
+\begin{figure}[tbp]
+	\centering
 
+
+	\includegraphics[width=1\textwidth]{4_large_small}
+	\caption{The boundary nodes of the local part of a grid are connected to non-local grid points. When the number of boundary grid points halves, also the number of non-local rows that have to be retrieved halves, while the total number of grid points decreases by a factor 4.} 
+	\label{fig:large_small}
+\end{figure}
+
+\subsubsection*{5120 $\times$ 5120, 16 cores}
+For this experiment, the grid size stays the same, but only a 16th of the number of processor cores is used now. This leads to various big changes in our pie chart. In order to explain these changes, it is useful to recall that the sizes of the result matrix of Mat2 is $N/p \times N/p$ and $(N-N/p) \times (N-N/p)$ for Mat3.
+
+
+
+First, the time spent on retrieving the non-local rows of $B$ diminishes to 0.1\%. This is expected since the diagonal blocks are much bigger now
 
 \begin{figure}[tbp]
 	\centering
@@ -209,6 +239,15 @@ First, the share for time spent on getting the non-local rows of $B$ almost doub
 	\label{fig:pie_32_190}
 \end{figure}
 
+
+\section{Multigrid}
+
+jacobi smoother
+
+
+direct solve within
+
+set up time vs iteration time
 
 \newpage
 \section{Strong and Weak Scaling}
@@ -251,13 +290,13 @@ The solution of the hydrostatic equation by using multigrid methods was one of t
 
 
 
-For the strong scaling properties of , this can be seen in Fig.~\ref{fig:res_ex48}: If less than ca. 15,000 unknowns are to be computed by each process (rank), the computing power of additional ranks cannot be fully exploited any more because the local matrices become very small and much data has to be transferred from rank to another. {\color{red} WHY IS IT ALMOST THE SAME FOR 16/4 RANKS PER NODE.}
+For the strong scaling properties of , this can be seen in Fig.~\ref{fig:res_ex48}: If less than ca. 15,000 unknowns are to be computed by each process (rank), the computing power of additional ranks cannot be fully exploited any more because the local matrices become very small and much data has to be transferred from rank to another.
 
 % ex48  (strong scaling)
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth]{ex48}
-	\caption{Strong scaling: A multigrid example that shows strong scaling effects. For less than ca. 15k unknowns per process, the computing power of additional ranks cannot be fully exploited any more. It can also be seen that 16 ranks/node is very often slightly faster than 4 ranks/node, when using the same total number of ranks.} 
+	\caption{Strong scaling: A multigrid example with a Jacobi preconditioner that shows strong scaling effects. For less than ca. 15k unknowns per process, the computing power of additional ranks cannot be fully exploited any more. It can also be seen that 16 ranks/node is very often slightly faster than 4 ranks/node, when using the same total number of ranks.} 
 	\label{fig:res_ex48}
 \end{figure}
 
@@ -281,6 +320,6 @@ A solver with good weak scaling properties, i.e. an execution time that does not
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth]{ex2_weak_nomaxit}
-	\caption{Weak scaling: Solving a linear system $Au = x$ with $2^{18} = 262k$ unknowns per process with different solvers. The calculations were stopped after 50 iterations.} 
+	\caption{Weak scaling: Solving a linear system $Au = x$ with $2^{14} = 16384$ unknowns per process with different solvers. } 
 	\label{fig:ex2_weak_nomaxit}
 \end{figure}
