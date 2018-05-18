@@ -100,7 +100,7 @@ As can be seen, the direct method is slightly faster than the two other methods 
 For the parallel matrix-matrix multiplication, there are two existing implementations, a scalable one and a non-scalable one. Similar to the sequential algorithm, the array with the array indices that refer to non-zero entries is of variable size for the scalable algorithm and of fixed size for the non-scalable algorithm. Since the matrices are divided among the processes in a way where complete rows are  associated with a process, this fixed sized array for the non-scalable implementation has a length that is equal to the number of columns of the matrix $B$. 
 
 \subsection{A Basis for a new Implementation}
-In order to see if the new implementation that was to be implemented for this thesis (see Section~\ref{sec:seq_mpi}) should be based on a scalable or non-scalable approach, their performance had to be evaluated. Fig.~\ref{fig:scalable} shows the results of a matrix-matrix multiplication with 8 processes for a 3d, 27 point stencil and different local grid sizes. For the smallest tested grid, the scalable algorithm is already ca. 70\% slower than the non-scalable algorithm. With bigger grids, this difference increases very quickly, so for the biggest tested grid, the scalable version is already 30 times slower than the non-scalable implementation. This biggest tested grid of local size $60 \times 60 \times 60$ (this corresponds to a global size of $120\times 120 \times 120$ for 8 processes) is still much smaller than other grids that were tested with the non-scalable algorithm. However, it is obvious that the scalable algorithm is not a reasonable choice for big systems. 
+In order to see if the new implementation that was to be implemented for this thesis (see Section~\ref{sec:seq_mpi}) should be based on a scalable or non-scalable approach, their performance had to be evaluated. Fig.~\ref{fig:scalable} shows the results of a matrix-matrix multiplication with 8 processes for a 3d, 27 point stencil and different local grid sizes. For the smallest tested grid, the scalable algorithm is already ca. 70\% slower than the non-scalable algorithm. With bigger grids, this difference increases very quickly: For the biggest tested grid, the scalable version is already 30 times slower than the non-scalable implementation. This biggest tested grid of local size $60 \times 60 \times 60$ (this corresponds to a global size of $120\times 120 \times 120$ for 8 processes) is still much smaller than other grids that were tested with the non-scalable algorithm. However, it is obvious that the scalable algorithm is not a reasonable choice for big systems. 
 
 The reason for this lack in performance for the scalable algorithm lies in the fact that new memory has to be allocated for new column indices very often, which is extremely expensive. Since the non-scalable implementation performs so much better, the new implementation is based on a non-scalable approach. 
 
@@ -112,11 +112,14 @@ The reason for this lack in performance for the scalable algorithm lies in the f
 \end{figure}
 
 \subsection{Comparison: Non-Scalable vs Sequential MPI}
-The existing non-scalable algorithm was compared to the new algorithm, which uses sequential matrix multiplication routines on many MPI ranks at the same time. Fig.~\ref{fig:mat_ex_test_ex2_times_2d} shows the results for different 2d stencils and for 32 processes (4 nodes with 8 processes each). 
+The existing \textit{non-scalable} algorithm was compared to the new \textit{sequential MPI} algorithm, which uses sequential matrix multiplication routines on many MPI ranks at the same time. This was tested for 2d and 3d stencils, and for different grid sizes.
+
+\subsubsection*{2d stencils}
+Fig.~\ref{fig:mat_ex_test_ex2_times_2d} shows the results for different 2d stencils and for 32 processes (4 nodes with 8 processes each). 
 
 It can be seen that the time per unknown remains quite constant for large grids. Only for small grids, considerably more time is needed because latencies oppress the performance.
 
-\subsubsection*{2d stencils}
+
 For the very small 2d, 5 point stencil the non-scalable version is quicker than the seq mpi version for all tested grid sizes. The absolute time difference between the two versions and the time per unknown are both remarkably constant. 
 
 With the 2d, 9 point stencil the behaviour of the two implementations is very similar, but due to more elements in the matrix (more connections between grid points), the time per unknown is bigger. Also, the difference between the two implementations is smaller now (less than 5\% for big grids). 
@@ -133,7 +136,7 @@ For the 2d, 13 point stencil and big grids, the seq mpi algorithm finally shows 
 \subsubsection*{3d stencils}
 A local grid size of up to $100 \times 100 \times 100$ (which corresponds to $317 \times 317 \times 317$ in global size) and again, 32 MPI-ranks, were used to evaluate the performance of the two implementations.  Fig.~\ref{fig:mat_ex_test_ex2_times_3dsmall} shows the results for small grids. For both stencil, we observe that for small grids, the time per unknown is almost 3 times higher than for the big grids. Again, this is due to latencies that take a big ratio of the total time when dealing with small grids.
 
-For the 3d, 7 point stencil and for both implementations, the time per unknown changes only very little for grids with $N \gtrapprox 40$ (around 2$\mu  s$ per unknown for the non-scalable implementation). The \textit{seq mpi} implementation is around 25\% slower. For the 3d 13 point stencil, the difference between the two implementations is very little with no clearly faster version. 
+For the 3d, 7 point stencil and for both implementations, the time per unknown changes only very little for grids with $N \gtrapprox 40$ (around 2$\mu  s$ per unknown for the non-scalable implementation). The \textit{sequential MPI} implementation is around 25\% slower. For the 3d 13 point stencil, the difference between the two implementations is very little with no clearly faster version. 
 
 
 \begin{figure}[tbp]
@@ -143,9 +146,9 @@ For the 3d, 7 point stencil and for both implementations, the time per unknown c
 	\label{fig:mat_ex_test_ex2_times_3dsmall}
 \end{figure}
 
-Fig.~\ref{fig:mat_ex_test_ex2_times_3dlarge} shows the time per unknown for big 3d stencils. Now the time per unknown is does not change much for grids with $N > 30$. For these big grids, the \textit{seq mpi} implementation is clearly faster: For big grids and with the 3d, 27 point stencil, the \textit{non-scalable} implementation needs around 50\% more time than the \textit{seq mpi} implementation. 
+Fig.~\ref{fig:mat_ex_test_ex2_times_3dlarge} shows the time per unknown for big 3d stencils. Now the time per unknown is does not change much for grids with $N > 30$. For these big grids, the \textit{sequential MPI} implementation is clearly faster: For big grids and with the 3d, 27 point stencil, the \textit{non-scalable} implementation needs around 50\% more time than the \textit{seq mpi} implementation. 
 
-In conclusion, we note that the non-scalable implementation is usually faster for both small and big grids, if the used stencil is small, i.e. if the stencil has less than 13 points. This is true for both 2d and 3d stencils. For 13 point stencils, there is no clear winner, but with more than 13 points in a stencil, the new \textit{seq mpi} performs up to 50\% better than the existing \textit{non-scalable} implementation.
+In conclusion, we note that the non-scalable implementation is usually faster for both small and big grids, if the used stencil is small, i.e. if the stencil has less than 13 points. This is true for both 2d and 3d stencils. For 13 point stencils, there is no clear winner, but with more than 13 points in a stencil, the new \textit{sequential MPI} performs up to 50\% better than the existing \textit{non-scalable} implementation.
 
 \begin{figure}[tbp]
 	\centering
@@ -159,7 +162,7 @@ In conclusion, we note that the non-scalable implementation is usually faster fo
 Next the time consumption of different parts of the \textit{sequential MPI} implementation is analyzed. For that, the algorithm was divided into 10 essential sections, which add up to 100\% of the symbolic calculation:
 
 \begin{itemize}
-\item Memory allocations: This includes malloc(), calloc(), PetscNew() functions and the creation of the linked list.
+\item Memory allocations: This includes malloc(), calloc(), PetscNew() functions and other functions for creating arrays.
 \item Get \textit{B} rows: This is the step where the non-local rows of $B$ that are needed for the calculation are being retrieved from other processors.
 \item Correct indices: Here the column index of the result of $A_{\textrm{loc, diag}} B_{\textrm{loc, diag}}$ are converted from local indices to global indices.
 \item Set \texttt{dnz} and \texttt{onz}: The arrays \texttt{dnz} and \texttt{onz} store information about the number of non-zero entries in the diagonal and offdiagonal part of each row. This information is calculated in this step. 
@@ -218,27 +221,54 @@ Except for these two sections (getBRows and preallocation), the relative amounts
 \end{figure}
 
 \subsubsection*{5120 $\times$ 5120, 16 cores}
-For this experiment, the grid size stays the same, but only a 16th of the number of processor cores is used now. This leads to various big changes in our pie chart. In order to explain these changes, it is useful to recall that the sizes of the result matrix of Mat2 is $N/p \times N/p$ and $(N-N/p) \times (N-N/p)$ for Mat3.
-
-
-
-First, the time spent on retrieving the non-local rows of $B$ diminishes to 0.1\%. This is expected since the diagonal blocks are much bigger now
+For this experiment, the grid size stays the same, but only a 16th of the number of processor cores is used now. This leads to various big changes in our pie chart, which can be seen in Fig.~\ref{fig:pie_16_5120}. In order to explain these changes, it is useful to recall that the sizes of the result matrix are $N/p \times N/p$ for Mat2 and $(N-N/p) \times (N-N/p)$ for Mat3.
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=1\textwidth, trim={0 3.cm 0 3cm},clip]{16cores_5120}
+	\includegraphics[width=1\textwidth, trim={0 3.5cm 0 3cm},clip]{16cores_5120}
 	\caption{MatMatMult for a $5120 \times 5120$ grid, 16 cores, and a 2d, 13 point stencil} 
 	\label{fig:pie_16_5120}
 \end{figure}
 
+Decreasing the number of processes yields a much bigger result matrix for Mat2 and a smaller one for Mat3. Therefore, Mat3 does so much time anymore; instead it needs as much time as Mat2. Also the total number of off-diagonal elements decreases a lot, hence the time spent Mat2 and Mat3 is much smaller now.
+
+Next, we note that the time spent on retrieving the non-local rows of $B$ diminishes to 0.1\%. This is expected since the diagonal blocks are much bigger now, hence the total number of non-local elements decreases a lot. 
+
+Another share that decreases a lot (by a factor 3) is the time spent on memory allocations. Since the number of columns in the matrix stays the same, roughly the same amount of memory has to be allocated, so the absolute time spent on memory allocations stays almost the same. However, the multiplication takes much longer with 16 instead of 256 processes, so this share decreases a lot. 
+
+The last share that decreased considerably (by a factor 3.5) is the one for the preallocation. The explanation is the same as before: The total time stays roughly the same, while overall execution time increases very much.
+
+All mentioned decreases lead to a substantial increase of the time spent on matSetVal and on the multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$. The slices of pie for mat1 and matSetVal are both  around 60\% bigger than before.
+
+\subsubsection*{190 $\times$ 190 $\times$ 190, 32 cores}
+The same experiment was also done with a 3d system and a very big stencil. The system was of size $190 \times 190 \times 190$ and the 3d, 27 point stencil was used and 32 cores were employed. The results fit in the picture that we have already got from the last experiment (see Fig.~\ref{fig:pie_32_190}): Since only a relatively low number of cores was used, the shares of Mat2 and Mat3 do not differ very much (Mat2 would be much faster than Mat3 for a high number of cores) and are much smaller than the one of Mat1, but still bigger than they would be with a smaller stencil. 
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=1\textwidth, trim={0 3.cm 0 3cm},clip]{32cores_190}
+	\includegraphics[width=1\textwidth, trim={0 3.5cm 0 3cm},clip]{32cores_190}
 	\caption{MatMatMult for a $190 \times 190 \times 190$ grid, 32 cores and a 3d, 27 point stencil} 
 	\label{fig:pie_32_190}
 \end{figure}
 
+\subsubsection*{Comparison of MatSetVal to the \textit{non-scalable} implementation}
+
+Since the MatSetVal operation needs much more time than expected (sometimes more than a third of the total execution time), its duration was compared to the one of the \textit{non-scalable} implementation. It became clear that 
+
+\subsubsection*{Concluding the section}
+Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetValue routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal the values 
+
+
+\subsection{Time Ratio: Symbolic Calculation to Total Time}
+Similar to the sequential case, the ratio of time spent on the symbolic calculation to the overall time spent on matrix multiplication was analyzed. For that, 256 MPI-ranks were employed. The small grids had a global size of $500\times 500$ (local size: $32\times 32$) for the 2d stencils and $30\times 30 \times 30$ (local size: $5\times 5 \times 5$) for the 3d stencil. The large grids had a global size of $14000\times 14000$ (local size: $875 \times 875$) for the 2d stencils and $300 \times 300 \times 300$ (local size: $47\times 47 \times 47$) for the 3d stencil. 
+
+As can be seen in Fig.~\ref{fig:mpi_symnum}, the ratio of time spent on the symbolic calculation to the overall time is around 90\% for all stencils. For small grids this ratio is even bigger than for large grids. That means spending time on the optimization of the numeric stage is unlikely to be of great use. Instead, all further optimizations should be focused on the symbolic stage. 
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=1\textwidth, trim={0 3.cm 0 7cm},clip]{mpi_symnum}
+	\caption{Percentage of time spent on the symbolic stage of the matrix multiplication of the total execution time for the \textit{sequential MPI} implementation. The rest to 100\% is spent on the numeric stage.} 
+	\label{fig:mpi_symnum}
+\end{figure}
 
 \section{Multigrid}
 
