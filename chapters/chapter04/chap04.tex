@@ -236,12 +236,12 @@ Next, we note that the time spent on retrieving the non-local rows of $B$ dimini
 
 Another share that decreases a lot (by a factor 3) is the time spent on memory allocations. Since the number of columns in the matrix stays the same, roughly the same amount of memory has to be allocated, so the absolute time spent on memory allocations stays almost the same. However, the multiplication takes much longer with 16 instead of 256 processes, so this share decreases a lot. 
 
-The last share that decreased considerably (by a factor 3.5) is the one for the preallocation. The explanation is the same as before: The total time stays roughly the same, while overall execution time increases very much.
+The last share that decreased considerably (by a factor 3.5) is the one for the preallocation. The explanation is the same as for the prior memory allocations: The total time stays roughly the same, while overall execution time increases very much. Also, the time spent on memory allocations is inherently quite nondeterministic, since the operating system may or may not have adequate free memory to assign.
 
 All mentioned decreases lead to a substantial increase of the time spent on matSetVal and on the multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$. The slices of pie for mat1 and matSetVal are both  around 60\% bigger than before.
 
 \subsubsection*{190 $\times$ 190 $\times$ 190, 32 cores}
-The same experiment was also done with a 3d system and a very big stencil. The system was of size $190 \times 190 \times 190$ and the 3d, 27 point stencil was used and 32 cores were employed. The results fit in the picture that we have already got from the last experiment (see Fig.~\ref{fig:pie_32_190}): Since only a relatively low number of cores was used, the shares of Mat2 and Mat3 do not differ very much (Mat2 would be much faster than Mat3 for a high number of cores) and are much smaller than the one of Mat1, but still bigger than they would be with a smaller stencil. 
+The same experiment was also done with a 3d system and a very big stencil. The system was of size $190 \times 190 \times 190$,the 3d, 27 point stencil was used and 32 cores were employed. The results fit in the picture that we have already got from the last experiment (see Fig.~\ref{fig:pie_32_190}): Since only a relatively low number of cores was used, the shares of Mat2 and Mat3 do not differ very much (Mat2 would be much faster than Mat3 for a high number of cores) and are much smaller than the one of Mat1, but still bigger than they would be with a smaller stencil. 
 
 \begin{figure}[tbp]
 	\centering
@@ -250,12 +250,22 @@ The same experiment was also done with a 3d system and a very big stencil. The s
 	\label{fig:pie_32_190}
 \end{figure}
 
-\subsubsection*{Comparison of MatSetVal to the \textit{non-scalable} implementation}
+\subsubsection*{Comparison of MatSetVal in different MatMatMult implementations}
 
-Since the MatSetVal operation needs much more time than expected (sometimes more than a third of the total execution time), its duration was compared to the one of the \textit{non-scalable} implementation. It became clear that 
+Since the MatSetVal operation needs much more time than expected in the \textit{sequential mpi} implementation (sometimes more than a third of the total execution time), its duration was compared to the one of the \textit{non-scalable} implementation. The results can be seen in Fig.~\ref{fig:setvalues}. It became clear that the \textit{MatSetVal} operation is always faster in the \textit{nonscalable} implementation, even though the same matrix values are set. The \textit{nonscalable} implementation only needs between 42\% and 77\% percent of the time the \textit{sequential mpi} implementation needs for setting the values of the matrix. 
+
+However, though this behavior is reproducible, the result of 42\% is not too relevant since an extremely small matrix was used here. For bigger matrices, still around 7-10\% of the time spent on the symbolic calculation could be saved if we assume that a third of time was spent on \textit{MatSetVal} and the \textit{MatSetVal} performance of the \textit{nonscalable} implementation can be reached.  Therefore, this behavior still has to be analyzed further.
+
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=1\textwidth, trim={0 2cm 0 7cm},clip]{setvalues}
+	\caption{Normalized time for the \textit{setVal} operation. This is the step where the results of the symbolic calculation are written to the matrix.} 
+	\label{fig:setvalues}
+\end{figure}
 
 \subsubsection*{Concluding the section}
-Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetValue routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal the values 
+Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetValue routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal the values there seems to be a high potential for obtaining better performance through optimizations.
 
 
 \subsection{Time Ratio: Symbolic Calculation to Total Time}
@@ -270,17 +280,46 @@ As can be seen in Fig.~\ref{fig:mpi_symnum}, the ratio of time spent on the symb
 	\label{fig:mpi_symnum}
 \end{figure}
 
-\section{Multigrid}
+\section{Stages of Multigrid}
+The next thing that was analyzed were how long different stages of the multigrid solver need. 
+GAMG is the multigrid preconditioner that is implemented in PETSc and Hypre is an external package \cite{hypre-web-page}. 
 
-jacobi smoother
+The GAMG multigrid implementation is based on the hierarchy, that can be seen in Fig.~\ref{fig:multigrid_hierarchy_gamg}. This figure also shows the percentage of time that is spent on each stage of the implementation, when a single V-cycle is performed. 
+
+All computational work is done in the KSPSolve phase. This phase is divided into a setup phase (PCSetUp) and a phase where the preconditioner is applied (PCApply). In the setup phase, the entire multigrid hierarchy is build up. That means the coarse grid is created algebraically (PCGAMGCoarse\_AGG, 37.3\% of the setup phase), and the fine grid operators are created with Galerkin product
+\begin{equation}
+L_H = I_h^H L_h I_H^h = (I_H^h)^T L_h I_H^h
+\end{equation}
+as described in Chapter~2. For that, regular matrix matrix multiplications (MatMatMult, 14.7\%) and matrix multiplications with the transposed matrix (13.6\%) are used. The symbolic stage takes a similar share of the matrix multiplication as in previous experiments ($\approx 80\%)$.
+
+\begin{figure}[tbp]
+	\centering
+	\hspace*{-5mm}\includegraphics[width=1.1\textwidth]{Multigrid_hierarchy_GAMG}
+	\caption{Multigrid stages in GAMG.} 
+	\label{fig:multigrid_hierarchy_gamg}
+\end{figure}
+
+After the setup is complete, the preconditioner is applied with PCApply. That only takes around a tenth of the time that is spent on the setup phase, since only one iteration is performed here. When there are only a few iterations, the PCApply is faster than PCSetUp, with many iteration it takes more time. In a well-balanced solver, these operations should take roughly the same amount of time. 
+
+PCApply basically comprises a MatMult and a MatSOR stage. MatSOR (Matrix successive over relaxation) is a Jacobi iteration with a relaxation parameter, so this is the step where the error smoothing is done. This only takes 6.3\% of the time for the PCApply stage. Another step that is included here is a direct solve within PCApply.
+
+\begin{figure}[tbp]
+	\centering
+	\hspace*{-5mm}\includegraphics[width=1.\textwidth]{Multigrid_hierarchy_Hypre}
+	\caption{Multigrid stages in Hypre.} 
+	\label{fig:multigrid_hierarchy_hypre}
+\end{figure}
+
+big difference for PCSetUp between Hypre and GAMG, not so big for Apply
+
+
 
 
 direct solve within
 
 set up time vs iteration time
 
-\newpage
-\section{Strong and Weak Scaling}
+\section{Strong and Weak Scaling Properties of Multigrid}
 
 Here the strong scaling and weak scaling capabilities of the of the program were tested. Testing a program for its strong scaling capabilities means that there is a fixed problem size and the problem is solved by using different numbers of processes. Ideally, the time is inversely proportional to the number of processes used: $T \propto 1/\textit{\#processes}$. For weak scaling, the problem size per process is fixed and the program is executed with different numbers of processes, so the total problem size changes. Both scaling methods are illustrated in Fig.~\ref{fig:strong_weak_scaling}.
 
