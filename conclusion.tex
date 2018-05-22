@@ -1,5 +1,8 @@
 \chapter*{Conclusion}
 
-In the course of this thesis, two new algorithms were implemented. This leads to the question of how to use them properly and what further steps will be taken. 
+\initial{I}n the course of this thesis, two new algorithms were implemented and existing implementations were evaluated for their performance. This leads to the question of how to use them properly and what further steps can and will be taken. 
 
-For the new sequential matrix-matrix multiplication algorithm, 
+For the sequential matrix-matrix multiplication, I came to the conclusion that the \textit{rowmerge} algorithm should be used for small stencils, while the newly implemented \textit{combined} algorithm is better suited for big stencils. Both choices are made solely for performance reasons. For this implementation, there are no imminent optimizations planned. 
+
+The performance of parallel matrix-matrix multiplication algorithms also proved to be dependent on the used stencil. Similar to the sequential case, the new implementation (\textit{sequential MPI}) rendered the best results for big stencils.% For the biggest stencil, it needs only two thirds of time non-scalable needs.
+For small stencils, however, the existing \textit{nonscalable} implementation is slightly faster. Given that setting the result values of the matrix very often takes around a third of the time spent on matrix multiplication, the MatSetVal operation is a potential candidate for rewarding optimizations. The other section that takes a big share of time spent on matrix multiplication is the sequential matrix-multiplication of parts of the matrix (e.g. the sequential multiplication of diagonal elements). Since this operation relies on existing sequential matrix multiplications, improvements for sequential algorithms will be reflected in the parallel algorithm as well.

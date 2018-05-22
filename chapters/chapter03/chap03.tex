@@ -378,9 +378,6 @@ Increasing the number of processes of course increases the raw computing power, 
 The parallel implementation in PETSc is again divided into a symbolic phase that is followed by a numeric phase. 
 
 
-
-
-
 \section{Symbolic Phase of the Parallel Algorithm}
 In PETSc, there are two existing implementations of the symbolic phase for the parallel matrix-matrix multiplication. Similar to the sequential case, these implementations are either scalable or not scalable and again, the difference lies in the memory requirements; the non-scalable implementation has a complexity of $O(N_B)$ (with $N_B$ being the number of columns in $B$), and the scalable implementation only needs $O(\textit{nnz}_B)$ memory (with \textit{nnz}$_B$ being the number of non-zeros in $B$).
 
@@ -412,15 +409,29 @@ After that, the parallel matrix \texttt{Cmpi} can finally be created (L390). In 
 
 \subsection{A New Implementation of Parallel MatMatMult}
 \label{sec:seq_mpi}
-The just discussed scalable and non-scalable implementations first perform the calculation of one row of $C$ with the local part of $B$ ($A_{\textit{loc, diag~}} B_{\textit{loc, diag}}$), and subsequently with the non-local part of $B$ ($A_{\textit{loc, off~}} B_{\textit{non, loc}}$), before continuing to the next row of $C$, where the calculation with the local part is started again. This means that the non-local part of $B$ is needed very early in the computation, so the program has to wait until this non-local part is made available to the process. 
+The just discussed scalable and non-scalable implementations first perform the calculation of one row of $C$ with the local part of $B$ ($A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$), and subsequently with the non-local part of $B$ ($A_{\textrm{loc, off~}} B_{\textrm{non, loc}}$), before continuing to the next row of $C$, where the calculation with the local part is started again. This means that the non-local part of $B$ is needed very early in the computation, so the program has to wait until this non-local part is made available to the process.
 
 A new approach is to first request the non-local part in the beginning of the program. Then the calculations that can be done with the local part of $B$ are performed while the non-local rows are still being retrieved. The matrix multiplication is then calculated as the sum of three matrix products 
 \begin{equation}
 C_{\textrm{loc}} = A_{\textrm{loc~}} B = A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}} + A_{\textrm{loc, diag~}} B_{\textrm{loc, off}} + A_{\textrm{loc, off~}} B_{\textrm{nonloc}},
 \end{equation}
-where only the last product relies on non-local rows. When calculating these products, the multiplications 
+where only the last product relies on non-local rows. This asynchronous flow is shown in Fig.~\ref{fig:mpi_workflow}.
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.95\textwidth]{mpi_workflow}
+\caption{\textit{Left:} The work flow with as it is implemented in the new implementation: The matrix multiplication is split in three parts and non-local rows of \textit{B} are retrieved before any matrix calculations start. \textbf{Right:} The non-local rows of \textit{B} are retrieved at the same time as local multiplications are performed. This is not implemented yet.}
+\label{fig:mpi_workflow}
+\end{figure}
+
+When calculating these products, the multiplications 
 $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and $A_{\textrm{loc, off~}} B_{\textrm{nonloc}}$ can be fed to an existing, sequential implementation of the matrix multiplication. However, this is not possible for
 $A_{\textrm{loc, diag~}} B_{\textrm{loc, off}}$. The reason for that is that the existing implementation of the sequential matrix multiplication always uses the local column indices of the input matrices. For $A_{\textrm{loc, diag~}} B_{\textrm{loc, off}}$ however, the local column indices of $A$ do not fit to the row indices of $B$. For the other two multiplications, the two factors can just be multiplied with each other because even with local indices, $a_{ij}$ still refers to a column $b_j$. After a simple transformation from the local index to a global index, the result of this product can be used.
+
+In the course of this thesis, only the separation of the multiplication into three multiplications, of which two are carried out by existing procedures, was implemented. Changing the program to run in an asynchronous way, i.e. starting local calculations before non-local rows have arrived, can be implemented at a later stage. %However, as shown in the next chapter, only around 5\% time reduction can be gained from this approach. 
+Since the new implementation provides a more ordered program execution, performance improvements can even be expected if it runs in an asynchronous way.
+
+
 
 \subsubsection*{The algorithm}
 The algorithm then works as shown in Listing~\ref{alg:new}. Like in the previous algorithm, the function starts with requesting the non-local rows of $B$ that will be used by that process. Then the first matrix product $A_{\textrm{loc, diag~}}B_{\textrm{loc, diag}}$ is computed by using the sequential version of the matrix multiplication algorithm (L6). 
@@ -433,11 +444,11 @@ After that, the row of $B$ is copied to a sorted list again (L15). In the outer 
 \centering
 \vspace{5mm}
 {\includegraphics[width=0.9\textwidth]{mm_rowmerge}}
-\caption{The three arrays with the column indices of the results of the multiplications $A_{\textit{loc,diag~}}B_{\textit{loc,diag}}$, $A_{\textit{loc,diag~}} B_{\textit{loc,off}}$ and $A_{\textit{loc,off}}$ have to be merged.}
+\caption{The three arrays with the column indices of the results of the multiplications $A_{\textit{loc,diag~}}B_{\textit{loc,diag}}$, $A_{\textit{loc,diag~}} B_{\textit{loc,off}}$ and $A_{\textit{loc,off}~} B_{\textrm{nonloc}}$ have to be merged.}
 \label{fig:rowmerge}
 \end{figure}
 
-Ideally, all non-local rows have arrived by now and the computation of $A_{\textit{loc, off}} B_{\textit{nonloc}}$ can start without any delays (L26). This computation is also executed by an existing, sequential version of matrix multiplication. 
+Now the calculation of $A_{\textit{loc, off}} B_{\textit{nonloc}}$ can start (L26). This is also implemented by executing an existing, sequential version of matrix multiplication. 
 
 Next, the addition of these three matrix products starts (L27). That just means that the three arrays containing the j-indices are merged row by row, as can be seen in the example in Fig.~\ref{fig:rowmerge}. This is exactly the same principle as in the sequential \textit{rowmerge} algorithm. The only difference is that here result rows of three products are merged, while in \textit{rowmerge} many rows of \textit{B} are merged.
 

@@ -1,4 +1,4 @@
-MatMatMult_SeqAIJ_SeqAIJ_Intel(Mat A, Mat B, Mat *C)
+MatMatMult_SeqAIJ_SeqAIJ_combined(Mat A, Mat B, Mat *C)
 {
   // Determine an upper bound on memory  requirements for C
   // Iterate over all rows of A (all rows of C)
