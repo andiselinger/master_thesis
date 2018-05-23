@@ -262,7 +262,7 @@ f_5 = 4 \cdot 3^2 \cdot u_5 - 3^2 \cdot u_1 - 3^2 \cdot u_4  - 3^2 \cdot u_6 - 3
 
 
 
-By combining all points of the $4\times 4$ grid we obtain the linear system
+By combining all points of the $4\times 4$ grid we obtain the linear system \cite{schwed}
 
 \setcounter{MaxMatrixCols}{20}
 \begin{equation}
@@ -487,7 +487,7 @@ In early supercomputers with a small number of processors, data was shared among
 
 With a higher number of processors, however, it becomes increasingly difficult to manage such a shared architecture. Therefore, modern supercomputers with massive parallelism relinquish the shared memory idea and only use local memory. In this approach, a processor that needs non-local data has to request the data from other processors. This can be done for example with the message passing standard MPI. 
 
-Fig.~\ref{fig:finite_differences} shows a typical architecture of a supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory, which can be dedicated to a single core or multiple cores. Such a chip is integrated on a compute card that combines the raw computing power of the processors with main memory 
+Fig.~\ref{fig:finite_differences} shows a typical architecture of a supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory. This cache can be dedicated to a single core or multiple cores. The chip is integrated on a compute card that combines the computing power of the processors with several gigabytes of main memory. Multiple compute cards are 
 
 \begin{figure}[h]
 	\centering

@@ -31,14 +31,29 @@ it becomes obvious that the iterative formula sets the new error to the average 
 v_h^{m+1}(x_i, y_j) = \frac{1}{4}[&v_h^{m+1}(x_i-h, y_j) + v_h^{m}(x_i+h, y_j)\nonumber \\
  + &v_h^{m+1}(x_i, y_j-h) + v_h^{m}(x_i, y_j + h)].
 \end{align}
-Of course, averaging the error makes it smooth very quickly, but that does not mean that it becomes small. This effect can be seen in the example in Fig.~\ref{fig:mg_error_smoothing}.
+Of course, averaging the error makes it smooth very quickly, but that does not mean that it becomes small. This effect is illustrated in three figures: Fig.~\ref{fig:mg_error_smoothing_initial} shows the very coarse error of the initial guess. After two iterations, this error became quite smooth, but the absolute value only changed from 1 to around 0.7 (see Fig.~\ref{fig:mg_error_smoothing_2}. After ten iterations of the error smoothing procedure have been applied, the error is very smooth, but still has peaks with a value of 0.6 (Fig.~\ref{fig:mg_error_smoothing_10}). 
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
-	\includegraphics[width=1.\textwidth]{chapters/chapter02/mg_error_smoothing}
-	\caption{The Gauss-Seidel iteration smooths the error considerably after only very few iterations. However, even though it becomes smooth quickly, the error does not become much smaller.}
-	\label{fig:mg_error_smoothing}
+	\includegraphics[width=0.9\textwidth]{chapters/chapter02/mg_error_smoothing_initial}
+	\caption{The error of an initial guess is very coarse and reaches the highest possible value 1: Later, after smoothing has been applied, it will be much smoother.}
+	\label{fig:mg_error_smoothing_initial}
 \end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.9\textwidth]{chapters/chapter02/mg_error_smoothing_2}
+	\caption{After only two smoothing iterations, the error is much smoother than after the initial guess. The peaks of the error did not change so much, though: Only a change from 1 to around 0.7 can be observed (compared to Fig.~\ref{fig:mg_error_smoothing_initial}).}
+	\label{fig:mg_error_smoothing_2}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.9\textwidth]{chapters/chapter02/mg_error_smoothing_10}
+	\caption{After 10 iterations the error is very smooth, but the peak of the error only changed from 0.7 after 2 iterations to 0.6 now.}
+	\label{fig:mg_error_smoothing_10}
+\end{figure}
+
 
 \subsection{Approximating Smooth Errors on Coarse Grids}
 The second observation is that a smooth error on a fine grid can be well approximated on a coarser grid. This is because smoothness implies that there are no distinct high frequency components, which means the solution only needs low frequency components (hence, less information, which can also be provided by fewer grid points) to be approximated well. Therefore, if the error has become smooth after a few iterations, it can be approximated on a much coarser grid, where further computations are less expensive due to fewer grid points.
