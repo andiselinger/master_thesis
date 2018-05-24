@@ -220,9 +220,9 @@ These results are summarized in Table.~\ref{table:smoothing}. So the $\omega-$Ja
 
 
 \subsection{Other Smoothing Methods}
-There are many other methods to solve a linear system $Au = f$, but only some of them are suitable as smoothers. Direct solvers, like the LU decomposition for example, are not a good choice, because they need many computation steps until they fulfilled their task of producing an exact solution. These different computational costs are also due to the fact that a direct solver always has to solve the system from the start, while iterative solvers can start from approximations that may already be close to the solution~\cite{ascher2011first}.
+There are many other methods to solve a linear system $Au = f$, but only some of them are suitable as smoothers. Direct solvers, like the Gaussian elimination or LU decomposition are a bad choice, because they are wasteful and very time consuming for the solution of large systems \cite{mazumder2015numerical}. This is partly due to the fact that a direct solver always has to solve the system from the start, while iterative solvers can start from approximations that may already be close to the solution~\cite{ascher2011first}.
 
-Such an iterative solver can basically be any iteration that smooths the error, for example the Modified Richardson iteration or the Conjugate Gradient method. However, the Jacobi and the Gauss-Seidel method proved to be the most suitable ones.
+Such an iterative solver can basically be any iteration that smooths the error, among them are the line-by-line method \cite{mazumder2015numerical},  Stone's Strongly Implicit Method \cite{stone1968iterative}, the Method of Steepest Descent \cite{mazumder2015numerical}, the Modified Richardson iteration \cite{richardson1911ix} or the Conjugate Gradient method \cite{hestenes1952methods}. However, the Jacobi and the Gauss-Seidel method proved to be the most suitable ones \cite{Trottenberg:2000:MUL:374106}.
 
 
 

@@ -16,7 +16,7 @@ This master's thesis is concerned with the latter approach; the solution on supe
 
 There are many different approaches to define such a grid and to perform computations on a grid. The most promising way to do so is to not only use one grid, but to use several of them: The idea is to compute a rough solution on a fine grid, then continue the calculation on one or more coarser grids and correct the fine grid values with the solution of the coarse grids. Such multigrid methods will be discussed later. 
 
-But what are the actual calculations a computer (or rather: a cluster of computers) has to perform? Setting up the equations of the before-mentioned grid results in a system of linear equations, something so simple it can theoretically be solved with a plain linear solver like Gaussian elimination. Considering that the matrices used here can have millions to billions of rows and columns, there are much more efficient ways to do that, though. In our case, a so called multigrid solver is the preferred approach. Such a solver relies heavily on matrix multiplication, which is, again, an operation that can be performed in various ways: One way of matrix multiplication is to compute the product of dense matrices, so each element of a $m\times m$ matrix has to be computed and stored: Not only is this a very tedious task with a high computational complexity of $O(n^3)$ (for $n\times n$  matrices)\footnote{The complexity is in $O(n^3)$ for the naïve algorithm, there are more efficient algorithms with complexities of around $O(n^{2.376})$ \cite{COPPERSMITH1990251}.}, it also engages an enormously \textit{too} big amount of memory for our kind of computations: Typical matrices for  this kind of differential equation primarily have non-zeros around their diagonals, so our "tool of choice" is the multiplication of sparsely stored matrices, i.e. matrices where only non-zero elements are stored. The topic that I worked on for this thesis is optimizing and testing algorithms for this kind of multiplication.
+But what are the actual calculations a computer (or rather: a cluster of computers) has to perform? Setting up the equations of the before-mentioned grid results in a system of linear equations, something so simple it can theoretically be solved with a plain linear solver like Gaussian elimination. Considering that the matrices used here can have millions to billions of rows and columns, there are much more efficient ways to do that, though. In our case, a so-called multigrid solver is the preferred approach. Such a solver relies heavily on matrix multiplication, which is, again, an operation that can be performed in various ways: One way of matrix multiplication is to compute the product of dense matrices, so each element of a $m\times m$ matrix has to be computed and stored: Not only is this a very tedious task with a high computational complexity of $O(n^3)$ (for $n\times n$  matrices)\footnote{The complexity is in $O(n^3)$ for the naïve algorithm, there are more efficient algorithms with complexities of around $O(n^{2.376})$ \cite{COPPERSMITH1990251}.}, it also engages an enormously \textit{too} big amount of memory for our kind of computations: Typical matrices for  this kind of differential equation primarily have non-zeros around their diagonals, so our "tool of choice" is the multiplication of sparsely stored matrices, i.e. matrices where only non-zero elements are stored. The topic that I worked on for this thesis is optimizing and testing algorithms for this kind of multiplication.
 
 Hence, the division of this thesis is as follows: This chapter starts with some physical basics of the Poisson equation. In order to solve this equation (and similar partial differential equations) the thesis gradually sharpens its focus on selected components of the solution process. Also, an introduction on high performance computing is given in this chapter. The next chapter deals with the multigrid method, one of the essential approaches for solving big linear systems. Since matrix multiplications take a big amount of work and time of multigrid methods, the following chapter focuses on established and new implementations of matrix multiplications. In the end of this thesis, results and comparisons between different implementations are given. 
 
@@ -95,25 +95,30 @@ with $u_{xx} = \frac{\partial ^2u}{\partial x^2}$, coefficients $a_{ij}, a_i, a_
 with a naming convention that is inspired by planar curves. Examples of PDEs are 
 \begin{itemize}
 \item the (elliptic) Poisson equation $-\nabla^2 u = -u_{xx} - u_{yy} = f(x,y)$, which can be used to describe the potential field caused by a charge distribution,
-\item its special case, the Laplace equation $\nabla^2 u = u_{xx}  + u_{yy} = 0$, and
-\item the (hyperbolic) wave equation $u_{xx} - u_{yy} = 0$, for electromagnetic waves, sound waves and other types of waves.
-\item 
+\item its special case, the Laplace equation $\nabla^2 u = u_{xx}  + u_{yy} = 0$,
+\item the (hyperbolic) wave equation $u_{xx} - u_{yy} = 0$, for electromagnetic waves, sound waves and other types of waves, and
+\item the (parabolic) heat equation $u_{xx} - u_y = 0$.
 \end{itemize}
 In the following, solving the Poisson equation will be discussed because its ellipticity makes it very suitable for multigrid methods.
 
 \section{From a PDE to a Linear System}
-In this section the way from a PDE (in particular Poisson's equation) to a linear system $Au = f$ is shown. Usually the values $f(x,y)$ of Poisson's equation are given by an analytical equation or are otherwise known. The left hand side of the equation tells us that the $f(x,y)$ values are sums of second derivatives $u_{xx}$ and $u_{yy}$, hence we need to find a way to express these derivatives. Since a discretely working computer cannot use each one of the infinite number of points in the space, only certain points $(x,y)$ are used. And since not the whole set of points in the domain $\Omega$ is used for the calculations, the derivative we use is actually just an approximation of the derivative: the finite difference. The points $(x,y)$ that are selected for that are given by a grid. These finite differences and grids will be discussed shortly. First however, a short overview over other methods is given.
+There is a big number of different methods to solve PDEs. In order to find closed form analytical solutions, there are methods like the separation of variables, Fourier and Laplace transformations, and perturbation methods. However, these analytical methods are very limited by constraints such as linearity of the equations, or a regular geometry \cite{mazumder2015numerical}. Therefore, much more versatile numerical methods have been developed. 
 
-\subsection{Other Methods}
-There are three discretization approaches that can bring a differential equation into a finite-dimensional subspace:
+These methods can be classified into deterministic and stochastic methods. For stochastic methods, the result is based on statistical principles and therefore can vary slightly for the same input. Due  to this inherent statistical error, deterministic methods are usually preferred for the solution of PDEs \cite{mazumder2015numerical}. 
+
+
+The aim of such methods is to transform partial differential equations into a system of algebraic equations \cite{jasak1996error}. To this end, three discretization approaches are commonly used:
 \begin{itemize}
-\item Finite Difference Method (FDM): This method is usually used for Cartesian and other structured grids.
-\item Finite Volume Method (FDM): 
-\item Finite Element Method (FEM): Here a CAD model is split into different elements and each element is described by partial differential equations. FEMs can be used for unstructured grids. 
+\item Finite Difference Method (FDM): This is a relatively straightforward method based on the calculus of finite differences. Here the PDE has to be satisfied at a set of interconnected points. The value of the dependent variable is known at the boundaries and needs to be determined at all other points \cite{mazumder2015numerical}. This method will be illustrated in more detail in the next section. 
+\item Finite Volume Method (FVM): For the FVM, the PDE is satisfied over a finite-sized control volume rather than at points. Hence the computational domain is split into a set of control volumes known as cells, which can be either convex polygons (in 2D) or polyhedrons (in 3D). In contrast to the FDM, the system is not solved directly, but rather it is first integrated over the control volume and then approximated.  This method is very suitable for simulations of convective heat transfer and fluid flow \cite{raithby1990finite,mazumder2015numerical}.
+
+\item Finite Element Method (FEM): For this method, the computational domain is discretized into a set of convex elements. FEMs are widely used in different industrial applications. This ranges from aeronautical and automobile engineering to applications of applications of fluid mechanics, like thermal or chemical pollution phenomena. These methods are so versatile that they can be applied to almost all problems encountered in practice \cite{dhatt_fem}.
 \end{itemize}
 
 \subsection{Finite Differences}
- For approximations of the  derivatives of $u$ we use finite differences of which there are three commonly used types: the forward difference, the backward difference and the central difference \cite{langer}. 
+In this section the way from a PDE (in particular Poisson's equation) to a linear system $Au = f$ is shown by using the finite difference method. Usually the values $f(x,y)$ of Poisson's equation are given by an analytical equation or are otherwise known. The left hand side of the equation tells us that the $f(x,y)$ values are sums of second derivatives $u_{xx}$ and $u_{yy}$, hence we need to find a way to express these derivatives. Since a discretely working computer cannot use each one of the infinite number of points in the space, only certain points $(x,y)$ are used. And since not the whole set of points in the domain $\Omega$ is used for the calculations, the derivative we use is actually just an approximation of the derivative: the finite difference. The points $(x,y)$ that are selected for that are given by a grid. These finite differences and grids will be discussed shortly. 
+
+For approximations of the  derivatives of $u$ we use finite differences of which there are three commonly used types: the forward difference, the backward difference and the central difference \cite{langer}. 
 
 First, we only define those finite differences on a one dimensional grid. The points on this grid all have the same distance $h$ to each other. The smaller this distance $h$ is, the more grid points exist and the better is the approximation. For simplicity, we use the notation $u_h(x_i, y_j) = u_h(i\cdot h,j\cdot h) = u_{i,j}$. Fig.~\ref{fig:finite_differences} shows such a one dimensional grid with different types of finite differences.
 
@@ -162,7 +167,7 @@ We can see the difference between the finite difference and the exact solution $
 \end{equation}
 \end{itemize}
 
-As one can see, for the difference between the exact solution and the finite difference there are $O(h)$ terms for the forward and the backward difference, while only $O(h^2)$ and higher order terms exist for the central difference. Hence, the approximation is much better for the central difference, which will be used in the following. Since the second derivative of a function $u(x)$ is essential to Poisson's equation, it is also necessary to know its approximation. For that, we take the first derivation of $u(x)$
+As one can see, for the difference between the exact solution and the finite difference there are $O(h)$ terms for the forward and the backward difference, while only $O(h^2)$ and higher order terms exist for the central difference. Hence, the approximation is much better for the central difference, which will be used in the following. Since second derivatives of a function $u(x)$ are required for Poisson's equation, it is also necessary to know its approximation. For that, we take the first derivation of $u(x)$
 \begin{equation}
  \Big(\frac{\partial u}{\partial x}\Big)_i = u_x(x) \approx    \frac{u_{i+1} - u_{i-1}}{2h}
 \end{equation}
@@ -179,7 +184,7 @@ u_{xx}(x) \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{h^2}
 Now this approximation of $u_{xx}$ can be used on a grid. 
 
 \subsection{Poisson's Equation on a Grid}
-The points $(x,y)$ in $\Omega$ that are used for the finite differences are the points that lie on a grid $\Omega_h$ \cite{Trottenberg:2000:MUL:374106}. This grid is, for our purposes, square, two-dimensional and has equidistant points, with a distance $h = 1/N$ from one point to its neighbour. Here $N$ is the number of grid points in one direction, without counting the zero point, so there are $(N+1)^2$ points in total in $\Omega_h$. We also assume that we only operate within a square with a side of unit length $\Omega = (0,1)^2 \subset \mathbb{R}^2$. Then Poisson's equation
+The points $(x,y)$ in $\Omega$ that are used for the finite differences are the points that lie on a grid $\Omega_h$ \cite{Trottenberg:2000:MUL:374106}. This grid is, for our purposes, square, two-dimensional and has equidistant points, with a distance $h = 1/N$ from one point to its neighbour. Here $N$ is the number of grid points in one direction, without counting the zero point, so there are $(N+1)^2$ points in total in $\Omega_h$. We also assume that we only operate within the unit square $\Omega = (0,1)^2 \subset \mathbb{R}^2$. Then Poisson's equation
 \begin{equation}
 L u(x,y) = -\nabla^2 u(x,y) = f(x,y), \textnormal{ with } (x,y) \in \Omega
 \end{equation}
@@ -219,7 +224,7 @@ Here the stencil notation comes in handy \cite{Trottenberg:2000:MUL:374106}:
 
 This equation shows that in our approximation, five unknown values $u_{i-1,j},$ $u_{i+1,j},$ $u_{i,j-1},$ $u_{i,j+1},$ $u_{i,j}$, depend on the function value $f_{i,j}$. In Fig.~\ref{fig:nat_order}, this means $f_{i,j}$ (in the middle of the 5-point stencil) determines the four adjacent u values and $u_{i,j}$.
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
 \includegraphics[width=0.42\textwidth]{chapters/chapter01/linear_order.pdf}
 	\caption{A function value $f_{i,j}$ (in the middle of the 5-point stencil) determines the values of the unknowns $u_{i-1,j}, u_{i+1,j}, u_{i,j-1}, u_{i,j+1}, \textrm{ and } u_{i,j}$. }
@@ -227,7 +232,7 @@ This equation shows that in our approximation, five unknown values $u_{i-1,j},$ 
 \end{figure}
 
 \subsubsection*{Different Orderings}
-The solution $u$ and the function $f$ both lie on a two dimensional grid, however, it is  necessary to arrange them as one dimensional vectors in order to bring the system to a form $Au = b$. One way to arrange these vectors is to use lexicographical ordering, so $u$ and $f$ are arranged as
+The solution $u$ and the function $f$ both lie on a two-dimensional grid. However, it is  necessary to arrange them as one-dimensional vectors in order to bring the system to the form $Au = b$. One way to arrange these vectors is to use lexicographical ordering, so $u$ and $f$ are arranged as
 \begin{align}
 u &= [u_{0,0}, u_{1,0}, \hdots, u_{N,0}, u_{0,1}, u_{1,1}, \hdots, u_{N,1}, \hdots, u_{N,N} ]^T, \textrm{ and} \label{equ:natorder} \\
 f &= [f_{0,0}, f_{1,0}, \hdots, f_{N,0}, f_{0,1}, f_{1,1}, \hdots, f_{N,1}, \hdots, f_{N,N} ]^T. \nonumber
@@ -235,7 +240,7 @@ f &= [f_{0,0}, f_{1,0}, \hdots, f_{N,0}, f_{0,1}, f_{1,1}, \hdots, f_{N,1}, \hdo
 An example of that  on a $4\times 4$ grid can be seen in Fig.~\ref{fig:nat_order_lexi_rb} a). Another kind of ordering the grid points is the red-black ordering (Fig.~\ref{fig:nat_order_lexi_rb}b), which has different properties in the possible degree of parallelization and yields a very different matrix $A$.
 
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.65\textwidth]{chapters/chapter01/linear_order_lexi_rb.pdf}
 	\caption{\textbf{a)} The points $x_{i,j}$ are sorted in a lexicographical ordering as in Equ. (\ref{equ:natorder}) to form vectors $u$ and $f$. \textbf{b)} Grid points sorted in the red-black ordering.}
@@ -243,7 +248,7 @@ An example of that  on a $4\times 4$ grid can be seen in Fig.~\ref{fig:nat_order
 \end{figure}
 
 \subsubsection*{Combining it all to a linear system}
-Now the example from Fig.\ref{fig:nat_order_2} is useful: Given a two-dimensional grid with $N = 3$ and $h = \frac{1}{N} = \frac{1}{3}$ and lexicographical ordering, we want to solve the Poisson equation. For that, we start with expressing $f_5$: With (\ref{equ:dis_poisson}) and lexicographical order we get 
+Now the example from Fig.~\ref{fig:nat_order_2} is useful: Given a two-dimensional grid with $N = 3$ and $h = \frac{1}{N} = \frac{1}{3}$ and lexicographical ordering, we want to solve the Poisson equation. For that, we start with expressing $f_5$: With (\ref{equ:dis_poisson}) and lexicographical order we get 
 \begin{equation}
 f_5 = 4 \cdot 3^2 \cdot u_5 - 3^2 \cdot u_1 - 3^2 \cdot u_4  - 3^2 \cdot u_6 - 3^2 \cdot u_9
 \end{equation}
@@ -253,7 +258,7 @@ f_5 = 4 \cdot 3^2 \cdot u_5 - 3^2 \cdot u_1 - 3^2 \cdot u_4  - 3^2 \cdot u_6 - 3
 
 
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.5\textwidth]{chapters/chapter01/linear_order_2.pdf}
 	\caption{Example of a grid with $h=\frac{1}{N} = \frac{1}{3}$. The points are sorted in a lexicographical order, so $f_5$ is a linear combination of $u_1, u_4, u_5, u_6 \textrm{ and } u_9$.}
@@ -322,7 +327,7 @@ By combining all points of the $4\times 4$ grid we obtain the linear system \cit
  \end{bmatrix}
  \label{equ:hugeA}
 \end{equation}
-Here, the ones in the matrix represent the fact that the border values $u_i = f_i$ are already known and only the rows corresponding to inner grid points show more than one non-zero. To be exact, they always have five non-zeros when using Equation~(\ref{fig:nat_order_2}), so a big linear system employs matrices where only a tiny percentage of elements is non-zero. We keep that thought in mind for later, when storing these matrices is discussed.
+Here, the ones in the matrix represent the fact that the boundary values $u_i = f_i$ are already known and only the rows corresponding to inner grid points show more than one non-zero. To be exact, they always have five non-zeros when using Equation~(\ref{fig:nat_order_2}), so a big linear system employs matrices where only a tiny percentage of elements is non-zero. We keep that thought in mind for later, when storing these matrices is discussed.
 
 
 In more general situations, with a $(N+1) \times (N+1)$ grid, one gets a linear system
@@ -384,7 +389,7 @@ A_{rb} = \frac{1}{h^2}
 There are different ways of how to deal with such a linear system, the most efficient ones will be discussed in the next section.
 
 \section{Introduction to Linear Systems}
-Big linear system of the form $Au = b$ are usually solved iteratively, with an approximate solution $u^{(k)}$ that converges to $u = A^{-1}b$ \cite{golub1996matrix}. There are various ways to solve such a linear system, with different efficiencies and different kinds of applications. Therefore, it can be essential to pick the most appropriate solver method. For example, the banded version of Gaussian elimination, a direct solver, has a complexity of $O(N^2)$, with a total number of unknowns $N$, while much more efficient iterative solvers like the Jacobi iteration or the Gauss-Seidel iteration both have complexities of $O(N^2 \log \epsilon)$, with a discretization accuracy $\epsilon$ \cite{Trottenberg:2000:MUL:374106}. 
+Big linear system of the form $Au = b$ are usually solved iteratively, with an approximate solution $u^{(k)}$ that converges to $u = A^{-1}b$ \cite{golub1996matrix}. There are various ways to solve such a linear system, with different efficiencies and different kinds of applications. Therefore, it is essential to pick the most appropriate solver method. For example, the banded version of Gaussian elimination, a direct solver, has a complexity of $O(N^2)$, with a total number of unknowns $N$, while iterative solvers like the Jacobi iteration or the Gauss-Seidel iteration both have complexities of $O(N^2 \log \epsilon)$, with a discretization accuracy $\epsilon$ \cite{Trottenberg:2000:MUL:374106}. 
 
 On the other hand, multigrid solvers, which rely on iterative solvers like the Gauss-Seidel or the Jacobi method, and specialized Poisson solvers like the total reduction method have an optimal efficiency of $O(N)$. What makes the multigrid method so powerful is the fact that even though it is not specialized on any particular kind of problem, it has the same efficiency as highly specialized Poisson solvers \cite{Trottenberg:2000:MUL:374106}. Since iterative solvers like the Jacobi method or the Gauss-Seidel method are the backbone of multigrid solvers, they will be discussed in the following.
 
@@ -419,7 +424,7 @@ However, when the $u_j^{(k-1)}$ values from the first sum are used in this equat
 \end{align}
 \hspace*{15mm}\textbf{end}
 
-We can also describe both iterations in terms of matrices. Then we separate \textit{A} into three parts, a strictly lower triangular, a diagonal and a strictly upper triangular part:
+We can also describe both iterations in terms of matrices. Then we split \textit{A} into three parts, a strictly lower triangular, a diagonal and a strictly upper triangular part:
 
 \begin{equation}
 L_A = 
@@ -476,20 +481,18 @@ After this introduction to mathematics and physics treated in this thesis, an ov
 
 Vector machines were the dominating supercomputers for around two decades, until they gradually got replaced by machines that implemented massive parallelism by installing a huge number of off-the-shelf CPUs. 
 
-Lately, also graphic processing units (GPUs) have been used in supercomputers. For example, the Titan supercomputer was upgraded from a CPU-only architecture to a hybrid-architecture that combines AMD Operton CPUs with NVIDIA Kepler GPUs. Through this upgrade, it increased it speed by a factor 10 and the power efficiency by a factor 5 \cite{titan}.
+Lately, also graphic processing units (GPUs) have been used in supercomputers. For example, the Titan supercomputer was upgraded from a CPU-only architecture to a hybrid-architecture that combines AMD Operton CPUs with NVIDIA Kepler GPUs. Through this upgrade, it increased its speed by a factor 10 and the power efficiency by a factor 5 \cite{titan}.
 
 
-\subsection{Architecture}
-
-\subsubsection{Shared Memory vs Distributed Memory}
+\subsection{Shared Memory vs Distributed Memory}
 
 In early supercomputers with a small number of processors, data was shared among different processors by using a shared memory. An example for such a system is the Cray-1. If the memory is just one physical memory that is shared among all processors, the architecture is called uniform memory access (UMA) and the access times are similar for each processor. If the processors also use local memory, this local memory can be accessed much faster, so the architecture is called non-uniform memory access (NUMA). 
 
 With a higher number of processors, however, it becomes increasingly difficult to manage such a shared architecture. Therefore, modern supercomputers with massive parallelism relinquish the shared memory idea and only use local memory. In this approach, a processor that needs non-local data has to request the data from other processors. This can be done for example with the message passing standard MPI. 
 
-Fig.~\ref{fig:finite_differences} shows a typical architecture of a supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory. This cache can be dedicated to a single core or multiple cores. The chip is integrated on a compute card that combines the computing power of the processors with several gigabytes of main memory. Multiple compute cards are 
+Fig.~\ref{fig:finite_differences} shows a typical architecture of a supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory. This cache can be dedicated to a single core or multiple cores. The chip is integrated on a compute card that combines the computing power of the processors with several gigabytes of main memory. Multiple compute cards (nodes) are combined on a node card, where the nodes are connected with some kind of interconnect. This interconnect has to provide a very high throughput and low latency and can be implemented for example by using the InfiniBand standard \cite{liu2004high} or a multidimensional torus interconnect \cite{adiga2002overview}. This interconnect also connects racks with each other, so that a rack can 
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.8\textwidth]{architecture.png}
 	\caption{} 

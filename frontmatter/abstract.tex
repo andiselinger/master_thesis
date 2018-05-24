@@ -14,20 +14,9 @@
 \chapter*{Abstract}
 \begin{SingleSpace}
 
+\initial{S}imulations of electric fields are an essential part of the development of semiconductors. Such simulations rely on solving the Poisson equation with linear solvers, and some of these solvers, in turn, heavily rely on matrix-matrix multiplications. Since the matrices that arise for such simulations can have millions to billions rows and columns, highly efficient algorithms that run on multiple compute nodes are necessary. 
 
-
-
-\initial{T}hink of a distribution of electric charges. How can we know the corresponding potential field or the electrostatic field? This question can be answered with Poisson's equation, a partial differential equation that was first stated in the 19th century by French mathematician Siméon Denis Poisson. Depending on the kind of system and the demanded accuracy, the selected approach for solving this equation ranges from an analytical solution by hand to a numerical solution on a cluster of thousands of connected computing nodes. 
-
-This master's thesis is concerned with the latter approach; the solution on supercomputers. Such a numerical solution involves projecting a grid onto the space where the electrostatic field has to be computed. When iteratively performing computations to each point on this field, the solution converges to the real electric field values on that point. 
-
-There are many different approaches to define such a grid and to perform computations on a grid. The most promising way to do so is to not only use one grid, but to use several of them: The idea is to compute a rough solution on a fine grid, then continue the calculation on one or more coarser grids and correct the fine grid values with the solution of the coarse grids. Such multigrid methods will be discussed later. 
-
-But what are the actual calculations a computer (or rather: a cluster of computers) has to perform? Setting up the equations of the before-mentioned grid results in a system of linear equations, something so simple it can theoretically be solved with a plain linear solver like Gaussian elimination. Considering that the matrices used here can have millions to billions of rows and columns, there are much more efficient ways to do that, though. In our case, a so called multigrid solver is the preferred approach. Such a solver relies heavily on matrix multiplication, which is, again, an operation that can be performed in various ways: One way of matrix multiplication is to compute the product of dense matrices, so each element of a $m\times m$ matrix has to be computed and stored: Not only is this a very tedious task with a high computational complexity of $O(n^3)$ (for $n\times n$  matrices)\footnote{The complexity is in $O(n^3)$ for the naïve algorithm, there are more efficient algorithms with complexities of around $O(n^{2.376})$ \cite{COPPERSMITH1990251}.}, it also engages an enormously \textit{too} big amount of memory for our kind of computations: Typical matrices for  this kind of differential equation primarily have non-zeros around their diagonals, so our "tool of choice" is the multiplication of sparsely stored matrices, i.e. matrices where only non-zero elements are stored. The topic that I worked on for this thesis is optimizing and testing algorithms for this kind of multiplication.
-
-Hence, the division of this thesis is as follows: This chapter starts with some physical basics of the Poisson equation. In order to solve this equation (and similar partial differential equations) the thesis gradually sharpens its focus on selected components of the solution process. Also, an introduction on high performance computing is given in this chapter. The next chapter deals with the multigrid method, one of the essential approaches for solving big linear systems. Since matrix multiplications take a big amount of work and time of multigrid methods, the following chapter focuses on established and new implementations of matrix multiplications. In the end of this thesis, results and comparisons between different implementations are given. 
-
-
+In this thesis, new algorithms for both sequential and parallel matrix-matrix multiplication were implemented, with the goal of speeding up the linear solver they are part of. Also different linear solvers are evaluated for their speed and how well-suited they are for a large number of processors.
 
 \end{SingleSpace}
 \clearpage
