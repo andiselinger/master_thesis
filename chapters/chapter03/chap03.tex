@@ -152,7 +152,7 @@ There are different points of view for matrix multiplication. For example, one c
 \centering
  \includegraphics[height=6cm]{matrix_multiplication_wiki}
     %By File:Matrix multiplication diagram.svg:User:BilouSee below. - This file was derived from: Matrix multiplication diagram.svg, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=15175268
-\caption{Each element of the product of two matrices $\textit{AB} = \textit{C}$ can be seen as the dot product of a row and a column vector: Element $c_{i,j}$ is the dot product of the $i$-th row vector of \textit{A} with the $j$-th column vector of \textit{B}.}
+\caption{Each element of the product of two matrices $\textit{AB} = \textit{C}$ can be seen as the dot product of a row and a column vector: Element $c_{i,j}$ is the dot product of the $i$-th row vector of \textit{A} with the $j$-th column vector of \textit{B}. Figure from the Wikimedia foundation	 \cite{wiki:matrix_multiplication_image}}
 \label{fig:matmult_dot_product}
 \end{figure}
 However, due to very irregular memory access patterns and low data locality, directly computing dot products of row and column vectors is not the most favourable method for high performance. 
@@ -202,7 +202,7 @@ b)\\
 \includegraphics[width=0.72\textwidth]{sorted/spgemm-sorted-6}\\
 c)\\
 \vspace*{5mm}
-\caption{Symbolic matrix-matrix multiplication with the \textit{sorted} algorithm, part 1.}
+\caption{Symbolic matrix-matrix multiplication with the \textit{sorted} algorithm, part 1. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-sorted_1}
 \end{figure}
 
@@ -217,7 +217,7 @@ e)\\
 \includegraphics[width=0.72\textwidth]{sorted/spgemm-sorted-10}\\
 f)\\
 \vspace*{5mm}
-\caption{Symbolic matrix-matrix multiplication with the \textit{sorted} algorithm, part 2.}
+\caption{Symbolic matrix-matrix multiplication with the \textit{sorted} algorithm, part 2. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-sorted_2}
 \end{figure}
 
@@ -248,7 +248,7 @@ b)\\
 \includegraphics[width=0.72\textwidth]{scalable/spgemm-scalable-5}\\
 c)\\
 \vspace*{5mm}
-\caption{Symbolic matrix-matrix multiplication with the \textit{scalable} algorithm, part 1.}
+\caption{Symbolic matrix-matrix multiplication with the \textit{scalable} algorithm, part 1. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-scalable_1}
 \end{figure}
 
@@ -264,7 +264,7 @@ e)\\
 \includegraphics[width=0.72\textwidth]{scalable/spgemm-scalable-10}\\
 f)\\
 \vspace*{10mm}
-\caption{Symbolic matrix-matrix multiplication with the \textit{scalable} algorithm, part 2.}
+\caption{Symbolic matrix-matrix multiplication with the \textit{scalable} algorithm, part 2. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-scalable_2}
 \end{figure}
 
@@ -293,7 +293,7 @@ b)\\
 \includegraphics[width=0.85\textwidth]{row/spgemm-row-6}\\
 c)\\
 \vspace*{6mm}
-\caption{Symbolic matrix-matrix multiplication with the \textit{rowmerge} algorithm.}
+\caption{Symbolic matrix-matrix multiplication with the \textit{rowmerge} algorithm. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-row}
 \end{figure}
 
@@ -342,7 +342,7 @@ b)\\
 \includegraphics[width=0.72\textwidth]{spgemm-numeric-6}\\
 c)\\
 \vspace*{5mm}
-\caption{Numeric sparse matrix-matrix calculation.}
+\caption{Numeric sparse matrix-matrix calculation. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:spgemm-numeric}
 \end{figure}
 
@@ -366,7 +366,7 @@ On the other hand, if there are any off-diagonal elements in $A$, the process ha
 \begin{figure}[tb]
 \centering
 \vspace{5mm}
-{\includegraphics[width=0.95\textwidth]{parallel/spgemm-parallel-2}}
+{\includegraphics[width=0.95\textwidth]{parallel/spgemm-parallel-2} Figures by Karl Rupp \cite{karli_LANS_image}.}
 \caption{If there are off-diagonal elements in $A$, the process has to retrieve rows of $B$ from other processes.}
 \label{fig:parallel-2}
 \end{figure}
