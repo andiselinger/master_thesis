@@ -375,7 +375,7 @@ I_{2h}^h = \frac{1}{4} \begin{bmatrix}
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.5\textwidth]{chapters/chapter02/mg_prolongation_grid}
-	\caption{Transitioning to a fine grid $\Omega_h$: The red points were already part of the rough grid $\Omega_H$, while the other points are calculated by interpolation.}
+	\caption{Transitioning to a fine grid $\Omega_h$: The red points (filled circles) were already part of the rough grid $\Omega_H$, while the other points are calculated by interpolation.}
 	\label{fig:mg_prolongation_grid}
 \end{figure}
 
@@ -390,6 +390,7 @@ Fig.~\ref{fig:mg_prolongation} shows how the new grid points are calculated by a
 
 
 \subsection{Coarse Grid Operator $L_H$}
+\label{sec:PtAP}
 In order to solve the system $L_H v_h^m = \overline{d}_H^m$ from the two-grid cycle on the coarser grid, first the coarse grid operator $L_H$ has to be determined. Even though it only has to be calculated once and not in each iteration step, this can take a considerable ratio of the total time spent on the multigrid iteration. The coarse grid operator can be determined by either discretizing the grid again, or by performing the matrix multiplication
 \begin{equation}
 L_H = I_h^H L_h I_H^h
