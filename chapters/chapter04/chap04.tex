@@ -5,29 +5,35 @@ First the results of the matrix-matrix multiplication benchmarks are given, both
 
 \section{Sequential Matrix-Matrix Multiplication}
 
-In order to evaluate the performance of different sequential matrix-matrix multiplication implementations, the operation $C = AA$ was carried out on one processor core of the VSC-3. The matrix $A$ here is a matrix that could arise from a Poisson equation when using one of various stencils and a specific grid size. Since there is a row in the matrix for each element of the grid, a $20\times 20 \times 20$ grid for example yields a $20^3 \times 20^3$ matrix.
+In order to evaluate the performance of different sequential matrix-matrix multiplication implementations, the operation $C = AA$ was carried out on one processor core of the VSC-3. The matrix $A$ here is a matrix that could arise from a Poisson equation when using one of various stencils and a specific grid size. Since there is a row in the matrix for each node of the grid, a $20\times 20 \times 20$ grid for example yields a $20^3 \times 20^3$ matrix.
+
 
 \subsection{Determining the Best \textit{combined} Implementation}
 For the sequential matrix-matrix multiplication, the first thing that had to be evaluated was how the \textit{combined} algorithm should be used. This is the newly implemented algorithm which combines the symbolic and numeric calculations in one step. As described in Chapter~3, the step where a column index is added to an array can be implemented in two ways: One way is to look for the index in the array and add it only if it is not present yet. The other way is to use a flag array that indicates if the index has already been added. 
 
-Both implementations were benchmarked and compared to the \textit{sorted} algorithm, as shown in Fig.~\ref{fig:ex209_insert_append_3d19p}. The 3 dimensional 19 point stencil was used here and the \textit{combined} algorithm results were normalized to the \textit{sorted} algorithm. 
+Both implementations were benchmarked and compared to the \textit{sorted} algorithm, as shown in Fig.~\ref{fig:ex209_insert_append_3d19p}. The three-dimensional 19-point stencil (see next section) was used here and the \textit{combined} algorithm results were normalized to the \textit{sorted} algorithm. 
 
-For this experiment, the \textit{combined} algorithm with \texttt{appendToArray()} (which uses a flag array) delivers almost the same performance as the \textit{sorted} algorithm, with a low correlation between grid size and normalized execution time. On the other hand, the \texttt{insertInArray()} version, performs much poorer than the other implementations. Here, the fact that an index of the array is searched in each iteration is reflected in the results; it needs around twice the amount of time. Since the \texttt{appendToArray()} version performs so much better, the other version was not used for further benchmarks.
+For this experiment, the \textit{combined} algorithm with \texttt{appendToArray()} (which uses a flag array) delivers a performance that differs less than 5\% from the \textit{sorted} algorithm performance, with a low correlation between grid size and normalized execution time. On the other hand, the fact that an index of the array is searched in each iteration is reflected in the results for the \texttt{insertInArray()} version: This version needs around twice the amount of time that \textit{sorted} needs. Since the \texttt{appendToArray()} version performs so much better, the other version was not used for further benchmarks.
 
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth, trim={0 2.cm 0 7cm},clip]{seq_insert_append}
-	\caption{Sequential MatMatMult(): The two different implementations of the \textit{combined} algorithm are compared to the \textit{sorted} algorithm of the sequential matrix-matrix multiplication for different grid sizes.} 
+	\caption{Sequential MatMatMult(): The two different implementations of the \textit{combined} algorithm (comb insert and comb append) are compared to the \textit{sorted} algorithm of the sequential matrix-matrix multiplication for different grid sizes.} 
 	\label{fig:ex209_insert_append_3d19p}
 \end{figure}
 
 \subsection{Different Stencils}
-Next, the matrix-matrix multiplication was evaluated by using different implementations (which were described in Chapter 3) and different stencils (see Fig.~\ref{fig:ex209_R}). For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. 
+Next, the matrix-matrix multiplication was evaluated by using different implementations (which were described in Chapter 3) and different stencils. The number of points in a stencil tells how many points are used for describing an unknown value with a linear combination. In Chapter~2, five points were used to approximate a two-dimensional solution for the Poisson equation. With a higher number of points, the accuracy can be improved (so higher order derivatives are approximated) and three-dimensional simulations can be modeled. However, more points also result in more computational work. Fig.~\ref{fig:stencils} shows different two-dimensional stencils, among them two different 9-point stencils. 
 
-As can be seen, the newly implemented \textit{combined} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{combined} algorithm is very often around 10-20\% faster than the sorted algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil.% and picking either of them will probably not end in a catastrophe. 
+\begin{figure}[tb]
+	\centering
+	\includegraphics[width=0.99\textwidth, trim={0 0.cm 0 0cm},clip]{stencils}
+	\caption{Several two-dimensional stencils. Different colors indicate different absolut values of the coefficients. \textbf{a)} 5-point stencil \textbf{b)} 9-point stencil, \textbf{c)}, another way to form a 9-point stencil, \textbf{d)} 13-point stencil} 
+	\label{fig:stencils}
+\end{figure}
 
-%That means that if the rows that have to be merged contain many non-zeros, the combined algorithm should be used, while the \textit{rowmerge} algorithm is better suited for rows with few non-zeros.
 
+For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. As can be seen in Fig.~\ref{fig:ex209_R}, the newly implemented \textit{combined} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{combined} algorithm is very often around 10-20\% faster than the \textit{sorted} algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil.
 
 % ex 209
 \begin{figure}[tb]

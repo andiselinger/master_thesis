@@ -181,7 +181,7 @@ u_{xx}(x) \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{h^2}
 \label{equ:uxx}
 \end{equation}
 
-Now this approximation of $u_{xx}$ can be used on a grid. 
+Now this approximation of $u_{xx}$ can be used on a grid \cite{langer}. 
 
 \subsection{Poisson's Equation on a Grid}
 The points $(x,y)$ in $\Omega$ that are used for the finite differences are the points that lie on a grid $\Omega_h$ \cite{Trottenberg:2000:MUL:374106}. This grid is, for our purposes, square, two-dimensional and has equidistant points, with a distance $h = 1/N$ from one point to its neighbour. Here $N$ is the number of grid points in one direction, without counting the zero point, so there are $(N+1)^2$ points in total in $\Omega_h$. We also assume that we only operate within the unit square $\Omega = (0,1)^2 \subset \mathbb{R}^2$. Then Poisson's equation
@@ -237,7 +237,7 @@ The solution $u$ and the function $f$ both lie on a two-dimensional grid. Howeve
 u &= [u_{0,0}, u_{1,0}, \hdots, u_{N,0}, u_{0,1}, u_{1,1}, \hdots, u_{N,1}, \hdots, u_{N,N} ]^T, \textrm{ and} \label{equ:natorder} \\
 f &= [f_{0,0}, f_{1,0}, \hdots, f_{N,0}, f_{0,1}, f_{1,1}, \hdots, f_{N,1}, \hdots, f_{N,N} ]^T. \nonumber
 \end{align}
-An example of that  on a $4\times 4$ grid can be seen in Fig.~\ref{fig:nat_order_lexi_rb} a). Another kind of ordering the grid points is the red-black ordering (Fig.~\ref{fig:nat_order_lexi_rb}b), which has different properties in the possible degree of parallelization and yields a very different matrix $A$.
+An example of that  on a $4\times 4$ grid can be seen in Fig.~\ref{fig:nat_order_lexi_rb} a). Another kind of ordering the grid points is the red-black ordering (Fig.~\ref{fig:nat_order_lexi_rb}b), which has different properties in the possible degree of parallelization and yields a very different matrix $A$ \cite{Trottenberg:2000:MUL:374106}.
 
 
 \begin{figure}[tbp]
@@ -370,7 +370,7 @@ A_{rr} & A_{rb}\\
 A_{br} & A_{bb}\\
 \end{bmatrix}
 \end{equation}
-Since (\ref{equ:dis_poisson}) does not connect any points of the same colour to each other, the blocks $A_{rr}$ and $A_{bb}$ are diagonal matrices with diagonal elements $\frac{4}{h^2}$, so the diagonal elements of \textbf{A} are the same for lexicographical and red-black ordering. A connection from point $x$ to point $y$ implies a connection from $y$ to $x$, so  $A_{rb} = A_{br}^T$. The resulting block matrix $A_{rb}$ is then
+Since (\ref{equ:dis_poisson}) does not connect any points of the same colour to each other, the blocks $A_{rr}$ and $A_{bb}$ are diagonal matrices with diagonal elements $\frac{4}{h^2}$, so the diagonal elements of \textbf{A} are the same for lexicographical and red-black ordering. A connection from point $x$ to point $y$ implies a connection from $y$ to $x$, so  $A_{rb} = A_{br}^T$. The resulting block matrix $A_{rb}$ is then \cite{Trottenberg:2000:MUL:374106}
 \begin{equation}
 A_{rb} = \frac{1}{h^2} 
 \begin{bmatrix}
@@ -424,7 +424,7 @@ However, when the $u_j^{(k-1)}$ values from the first sum are used in this equat
 \end{align}
 \hspace*{15mm}\textbf{end}
 
-We can also describe both iterations in terms of matrices. Then we split \textit{A} into three parts, a strictly lower triangular, a diagonal and a strictly upper triangular part:
+We can also describe both iterations in terms of matrices \cite{golub1996matrix}. Then we split \textit{A} into three parts, a strictly lower triangular, a diagonal and a strictly upper triangular part:
 
 \begin{equation}
 L_A = 
@@ -470,16 +470,28 @@ In Chapter~2 we will discuss how such iterative solvers are part of the multigri
 
 
 \section{Supercomputers}
+
 After this introduction to mathematics and physics treated in this thesis, an overview on supercomputer is given. So what is a supercomputer? They are computers with a very high level of performance compared to regular computers and they were introduced in the 1960s as highly tuned conventional designs that processed their programs sequentially. Shortly after the introduction of these supercomputers, machines with an increasing amount of parallelism (e.g. four processors) emerged. In the 1970s, machines that operated on arrays of data with specialized math units started to be developed. An example of such a vector machine is the Cray-1, the first supercomputer that implemented the vector processor design. It operated at 80 MHz and had a peak performance of 250~MFLOPS --- around $1/370,000$ of the currently fastest computer~\cite{russell1978cray,top500sunway}. The applications for supercomputers at that time were primarily weather forecasting and aerodynamic research~\cite{russell1978cray}. The Cray-1 supercomputer can be seen in Fig.~\ref{fig:cray_1}.
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.5\textwidth]{chapters/chapter01/cray-1.jpg}
-	\caption{The Cray-1 was the first supercomputer that implemented a vector processor design. It was first employed in 1976.} %https://commons.wikimedia.org/wiki/File:Cray-1-deutsches-museum.jpg
+	\caption{The Cray-1 was the first supercomputer that implemented a vector processor design. It was first employed in 1976. Image by Wikimedia Commons \cite{wiki:cray_1_image}.} %https://commons.wikimedia.org/wiki/File:Cray-1-deutsches-museum.jpg
 	\label{fig:cray_1}
 \end{figure}
 
 Vector machines were the dominating supercomputers for around two decades, until they gradually got replaced by machines that implemented massive parallelism by installing a huge number of off-the-shelf CPUs. 
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{architecture.png}
+	\caption{Architecture of a supercomputer. Image by IBM \cite{image:supercomputer_arch}.} 
+	\label{fig:finite_differences}
+\end{figure}
+
+Fig.~\ref{fig:finite_differences} shows a typical architecture of a modern supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory. This cache can be dedicated to a single core or multiple cores. The chip is integrated on a compute card that combines the computing power of the processors with several gigabytes of main memory. Multiple compute cards (nodes) are combined on a node card, where the nodes are connected with some kind of interconnect. This interconnect has to provide a very high throughput and low latency, and can be implemented for example by using the InfiniBand standard \cite{liu2004high} or a multidimensional torus interconnect \cite{adiga2002overview}. The interconnect also connects racks with each other, so that, for example, 72 racks form a petaflop system with hundreds of terabytes of main memory.
+
+
 
 Lately, also graphic processing units (GPUs) have been used in supercomputers. For example, the Titan supercomputer was upgraded from a CPU-only architecture to a hybrid-architecture that combines AMD Operton CPUs with NVIDIA Kepler GPUs. Through this upgrade, it increased its speed by a factor 10 and the power efficiency by a factor 5 \cite{titan}.
 
@@ -488,18 +500,8 @@ Lately, also graphic processing units (GPUs) have been used in supercomputers. F
 
 In early supercomputers with a small number of processors, data was shared among different processors by using a shared memory. An example for such a system is the Cray-1. If the memory is just one physical memory that is shared among all processors, the architecture is called uniform memory access (UMA) and the access times are similar for each processor. If the processors also use local memory, this local memory can be accessed much faster, so the architecture is called non-uniform memory access (NUMA). 
 
-With a higher number of processors, however, it becomes increasingly difficult to manage such a shared architecture. Therefore, modern supercomputers with massive parallelism relinquish the shared memory idea and only use local memory. In this approach, a processor that needs non-local data has to request the data from other processors. This can be done for example with the message passing standard MPI. 
+With a higher number of processors, however, it becomes increasingly difficult to manage such a shared architecture. Therefore, modern supercomputers with massive parallelism relinquish the shared memory idea and only use local memory. In this approach, a processor that needs non-local data has to request the data from other processors, which can be done for example with the message passing standard MPI \cite{mpi_forum}. When working with a system that uses distributed memory, it can be convenient to emulate a shared memory. This can be done with Partitioned Global Address Space (PGAS) languages like Unified Parallel C or Titanium (a scientific computing dialect of Java)~\cite{Yelick:2007:PPU:1278177.1278183}.
 
-Fig.~\ref{fig:finite_differences} shows a typical architecture of a supercomputer. Starting from the lowest level, there is a chip with a number of processor cores and multiple levels of cache memory. This cache can be dedicated to a single core or multiple cores. The chip is integrated on a compute card that combines the computing power of the processors with several gigabytes of main memory. Multiple compute cards (nodes) are combined on a node card, where the nodes are connected with some kind of interconnect. This interconnect has to provide a very high throughput and low latency and can be implemented for example by using the InfiniBand standard \cite{liu2004high} or a multidimensional torus interconnect \cite{adiga2002overview}. This interconnect also connects racks with each other, so that a rack can 
-
-\begin{figure}[tbp]
-	\centering
-	\includegraphics[width=0.8\textwidth]{architecture.png}
-	\caption{} 
-	\label{fig:finite_differences}
-\end{figure}
-
-PGAS \cite{coarfa2005evaluation}
 
 \subsection{Benchmarks}
 In order to compare the performance of supercomputers, the TOP500 list of supercomputers is commonly used. This list is updated every six months and evaluates the number of floating point operations per second for the LINPACK benchmark \cite{linpack}. This benchmark generates a random dense linear system $Au = b$ in double precision arithmetic and solves it on distributed memory computers. However, the Linpack benchmark has been criticized for various reasons \cite{dongarra2007hpc}:
@@ -543,7 +545,7 @@ The Vienna Scientific Cluster (VSC) is a high performance computing system that 
 
 With 596 TFLOPS the VSC-3 was ranked number 84 in the November 2014 TOP500 list, but now it is only on the rank 460.  As of April 2018, it is still the fastest supercomputer in Austria ~\cite{top500n_VSC3}. 
 
-The VSC-3 uses around 540~kW of power, which has to be transported away. For that, a new approach was picked: Instead of a conventional air cooling, the system is submerged in 35 tons of paraffin oil, which transfers the heat away very efficiently due to its high heat conductivity \cite{vsc_oil}.
+The VSC-3 uses around 540~kW of power, which has to be led away. For that, a new approach was picked: Instead of a conventional air cooling, the cores are submerged in 35 tons of paraffin oil, which transfers the heat away very efficiently due to its high heat conductivity. The oil, in turn, is cooled by water on the roof of the building and can reach up to 55°C~\cite{vsc_oil}.
 
 
 
