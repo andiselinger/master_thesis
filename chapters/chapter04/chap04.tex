@@ -33,13 +33,13 @@ Next, the matrix-matrix multiplication was evaluated by using different implemen
 \end{figure}
 
 
-For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. As can be seen in Fig.~\ref{fig:ex209_R}, the newly implemented \textit{combined} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{combined} algorithm is very often around 10-20\% faster than the \textit{sorted} algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil.
+For these experiments, the grids had a size of $2000 \times 2000$ for the 2d stencils and $100\times 100 \times 100$ for the 3d stencils. As can be seen in Fig.~\ref{fig:ex209_R}, the newly implemented \textit{combined} algorithm (with \texttt{appendToArray()} function) performs quite well for all stencils. It is faster than the very similar \textit{sorted}-algorithm for most stencils, and it is the fastest algorithm for big stencils, i.e. for matrices that are not extremely sparse. The \textit{combined} algorithm is very often around 10-20\% faster than the \textit{sorted} algorithm, and only for small stencils, the \textit{rowmerge} algorithms perform better (up to 25\% faster). Except for the \textit{scalable} and the \textit{btheap} algorithm, the implementations show acceptable results. What is remarkable here is that the normalized execution time of the \textit{scalable} algorithm increases with the size of the stencil. This is due to the fact that bigger stencils lead to more non-zero matrix entries, which leads to more memory allocations. For \textit{sorted}, the number of memory allocations is independent of the size of the stencil.
 
 % ex 209
 \begin{figure}[tb]
 	\centering
 	\hspace*{-10mm}\includegraphics[width=1.1\textwidth, trim={0 7.cm 0 1.6cm},clip]{petsc-matmatmult}
-	\caption{Sequential matrix matrix multiplication for different stencils and implementations.  } 
+	\caption{Sequential matrix-matrix multiplication for different stencils and implementations.} 
 	\label{fig:ex209_R}
 \end{figure}
 
@@ -56,7 +56,7 @@ First, we take a look at the performance when using the small 2d, 5-point stenci
 	\label{fig:seq2d5point}
 \end{figure}
 
-The same evaluation is now done with a medium-sized stencil, the 2d, 13-point stencil (see Fig.~\ref{fig:seq2d13point}). This means there are now 13 non-zeros per row (out of 4 million entries per row for the largest tested grid). Now the situation changed quite a lot: The two \textit{rowmerge} algorithms are not always the best choice any more and especially the \textit{scalable} algorithm, which delivered a quite good performance before, now performs very poor: For all tested grids, it is about 1.7 times slower than the \textit{sorted} algorithm. Now the differences between the \textit{sorted}, the \textit{combined} and the \textit{rowmerge} algorithms are low (less than 10\%), so any of them is a reasonable choice for this stencil. Only for the $1000 \times 1000$ grid, the \textit{combined} algorithm is much faster (ca. 10\%) than the \textit{sorted} algorithm.
+The same evaluation is now done with a medium-sized stencil, the 2d, 13-point stencil (see Fig.~\ref{fig:seq2d13point}). This means there are now 13 non-zeros per row (out of 4 million entries per row for the largest tested grid). Now the situation changed quite a lot: The two \textit{rowmerge} algorithms are not always the best choice any more and especially the \textit{scalable} algorithm, which delivered a quite good performance before, now performs very poor: For all tested grids, it is about 1.7 times slower than the \textit{sorted} algorithm. Now the differences between the \textit{sorted}, the \textit{combined} and the \textit{rowmerge} algorithms are low (less than 10\%), so any of them is a reasonable choice for this stencil. Only for the $1000 \times 1000$ grid, the \textit{combined} algorithm is considerably faster (ca. 10\%) than the \textit{sorted} algorithm.
 
 \begin{figure}[tbp]
 	\centering
@@ -66,7 +66,7 @@ The same evaluation is now done with a medium-sized stencil, the 2d, 13-point st
 \end{figure}
 
 
-When using the big 3d, 27-point stencil, there are 27 non-zeros per row (out of 1.7 million entries per row for the largest tested grid). Now the trend of the \textit{scalable} and the \textit{rowmerge} algorithms continues (see Fig.~\ref{fig:seq3d27point}). The \textit{rowmerge} algorithms now need around 25\% more time than the \textit{sorted} algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. This shows that the \textit{scalable} algorithm is only memory-wise scalable, but not performance-wise. The \textit{combined} algorithm, proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
+When using the big 3d, 27-point stencil, there are 27 non-zeros per row (out of 1.7 million entries per row for the largest tested grid). Now the trend of the \textit{scalable} and the \textit{rowmerge} algorithms continues (see Fig.~\ref{fig:seq3d27point}). The \textit{rowmerge} algorithms need around 25\% more time than the \textit{sorted} algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. This shows that the \textit{scalable} algorithm is only memory-wise scalable, but not performance-wise. The \textit{combined} algorithm, proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
 
 \begin{figure}[tbp]
 	\centering
@@ -103,7 +103,7 @@ As can be seen, the direct method is slightly faster than the two other methods 
 \end{figure}
 
 \section{Parallel Matrix-Matrix Multiplication}
-For the parallel matrix-matrix multiplication, there are two existing implementations, a scalable one and a non-scalable one. Similar to the sequential algorithm, the array with the array indices that refer to non-zero entries is of variable size for the scalable algorithm and of fixed size (only dependent on the number of columns in the matrix) for the non-scalable algorithm. Since the matrices are divided among the processes in a way where complete rows are  associated with a process, this fixed sized array for the non-scalable implementation has a length that is equal to the number of columns in the matrix $B$. 
+Now that the sequential matrix-matrix multiplication has been analyzed, we continue with evaluating the parallel version. For this version, there are two existing implementations: a scalable one and a non-scalable one. Similar to the sequential algorithm, the array with the array indices that refer to non-zero entries is of variable size for the scalable algorithm and of fixed size (only dependent on the number of columns in the matrix) for the non-scalable algorithm. Since the matrices are divided among the processes in a way where complete rows are  associated with a process, this fixed sized array for the non-scalable implementation has a length that is equal to the number of columns in the matrix $B$. 
 
 \subsection{A Basis for a New Implementation}
 In order to see if the new implementation in this thesis (see Section~\ref{sec:seq_mpi}) should be based on a scalable or non-scalable approach, their performance had to be evaluated. Fig.~\ref{fig:scalable} shows the results of a matrix-matrix multiplication with 8 processes for a 3d, 27-point stencil and different local grid sizes. For the smallest tested grid, the \textit{scalable} algorithm is already ca. 70\% slower than the non-scalable algorithm. With bigger grids, this difference increases very quickly: For the biggest tested grid, the \textit{scalable} version is already 30 times slower than the \textit{nonscalable} implementation. This biggest tested grid of local size $60 \times 60 \times 60$ (this corresponds to a global size of $120\times 120 \times 120$ for 8 processes) is still much smaller than other grids that were tested with the \textit{nonscalable} algorithm. However, even with data limited to small and medium sized grids, it is obvious that the \textit{scalable} algorithm is not a reasonable choice for big systems. 
@@ -135,7 +135,7 @@ For the 2d, 13-point stencil and big grids, the \textit{seq mpi} algorithm final
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=1\textwidth]{times_2d}
-	\caption{} 
+	\caption{Parallel matrix multiplication for 2d stencils.} 
 	\label{fig:mat_ex_test_ex2_times_2d}
 \end{figure}
 
@@ -165,7 +165,7 @@ In conclusion, we note that the \textit{nonscalable} implementation is usually f
 
 \subsection{Time Division of the \textit{Sequential MPI} Implementation}
 
-Next the time consumption of different parts of the \textit{sequential MPI} implementation is analyzed. For that, the algorithm was divided into 10 essential sections, which add up to 100\% of the symbolic calculation:
+After finding out which algorithm is fastest for certain problems, we want to find out which parts of the newly implemented algorithm are especially attractive for optimizations. For that, the time consumption of different parts of the \textit{sequential MPI} implementation is analyzed. In order to do that, the algorithm is divided into 10 essential sections, which add up to 100\% of the symbolic calculation:
 
 \begin{itemize}
 \item Memory allocations: This includes malloc(), calloc(), PetscNew() functions and other functions for creating arrays.

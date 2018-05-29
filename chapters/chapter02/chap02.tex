@@ -56,7 +56,7 @@ Of course, averaging the error makes it smooth very quickly, but that does not m
 
 
 \subsection{Approximating Smooth Errors on Coarse Grids}
-The second observation is that a smooth error on a fine grid can be well approximated on a coarser grid. This is because smoothness implies that there are no distinct high frequency components, which means the solution only needs low frequency components (hence, less information, which can also be provided by fewer grid points) to be approximated well. Therefore, if the error has become smooth after a few iterations, it can be approximated on a much coarser grid, where further computations are less expensive due to fewer grid points.
+The second observation is that a smooth error on a fine grid can be well approximated on a coarser grid. This is because smoothness implies that there are no distinct high frequency components, which means the solution only needs low frequency components (hence, less information is needed, which can also be provided by fewer grid points) to be approximated well. Therefore, if the error has become smooth after a few iterations, it can be approximated on a much coarser grid, where further computations are less expensive due to fewer grid points.
 
 But what does high and low frequency actually mean? For that, we can express the error with a Fourier expansion as the sum of different sine waves:
 \begin{equation}
@@ -67,7 +67,7 @@ We see, this error is a sum of eigenfunctions
 \begin{equation}
 \varphi_h ^{k,l}(x,y) = \sin k \pi x~ \sin l \pi y \text{~~~~}(k,l = 1, \hdots, n-1)
 \end{equation}
-of the discrete operator $L_h$ on the fine grid. Therefore, in that context error smoothing means that low frequency components ($k$ and $l$ are small) are barely changed by smoothing iterations, while high frequency components ($k$ or $l$ is large) become small.
+of the discrete operator $L_h$ on the fine grid. Therefore, in that context, error smoothing means that low frequency components ($k$ and $l$ are small) are barely changed by smoothing iterations, while high frequency components ($k$ or $l$ is large) become small.
 
 Of course not all frequency components that are visible on a fine grid are also visible on a coarse grid. If the frequency of a component is higher or equal to half the number of grid points $N$, this component appears to have a lower frequency. 
 This effect is called aliasing and means that the eigenfunctions of a fine grid $\Omega_h$
@@ -83,7 +83,7 @@ all appear to have the same frequency on a grid with twice the mesh size $\Omega
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=1.\textwidth]{chapters/chapter02/mg_low_aliasing}
-	\caption{All vertical lines correspond to a 1D fine grid with $N = 8$, while only the thick lines belong to a coarse grid. Only the eigenfunctions with low frequencies $\varphi^1 - \varphi^3$ appear correctly on the coarse grid, while $\varphi^4$ is not visible at all and $\varphi^5 - \varphi^7$ appear as an inverted eigenfunction of lower frequency, drawn with a thick blue line ($\varphi^5$ seems to be $-\varphi^3$, etc.).}
+	\caption{All vertical lines correspond to a 1D fine grid with $N = 8$, while only the thick vertical lines belong to a coarse grid. Only the eigenfunctions with low frequencies $\varphi^1 - \varphi^3$ appear correctly on the coarse grid, while $\varphi^4$ is not visible at all and $\varphi^5 - \varphi^7$ appear as an inverted eigenfunction of lower frequency, drawn with a thick blue line ($\varphi^5$ seems to be $-\varphi^3$, etc.).}
 	\label{fig:mg_aliasing}
 \end{figure}
 
@@ -102,7 +102,7 @@ Therefore, eigenfunctions with frequencies $k, l < N~/~2$ are said to have a low
 \section{Iterative Methods as Smoothers}
 As it has been sketched in the beginning of this chapter, iterative solvers are capable of smoothing the error $v_h^m$ of an approximation $u_h^m$ considerably. Which solver (smoother) is selected and the choice of its relaxation parameter $\omega$ have a crucial impact on the smoothing properties. However, good smoothing properties might interfere with the degree of parallelization, since this degree also depends on the ordering of grid points.
 
-The Jacobi and the Gauss-Seidel iterations have already been described in the first chapter as a means of solving a linear system. As it is very important to obtain a smooth error (and not primarily to get a small error), the particularly good error smoothing capabilities of these iterations are utilized to that end. When these iterations are used as smoothers, they are often called relaxation methods rather than iterative solvers. 
+The Jacobi and the Gauss-Seidel iterations have already been described in the first chapter as a means of solving a linear system. As it is very important to obtain a smooth error (and not primarily to get a small error), the particularly good error smoothing capabilities of these iteration methods are utilized to that end. When they are used as smoothers, they are often called relaxation methods rather than iterative solvers. 
 
 
 \subsection{Jacobi Relaxation}
@@ -143,7 +143,7 @@ The value of the relaxation parameter $\omega$ influences the smoothing properti
 \end{equation}
 with corresponding eigenvalues 
 \begin{equation}
-\chi_h^{k,l}(\omega) = 1- \frac{\omega}{2}(2-\cos k \pi h - \cos l \pi h)
+\chi_h^{k,l}(\omega) = 1- \frac{\omega}{2}(2-\cos k \pi h - \cos l \pi h).
 \label{equ:eigenvalues}
 \end{equation}
 
@@ -161,7 +161,7 @@ The case for $\omega = 4/5$ is particularly important because it yields the opti
 \begin{equation}
 \mu^*(4/5) = 3/5.
 \end{equation}
-This means every smoothing step with $\omega = 4/5$ reduces high frequencies by at least a factor of 3/5.
+This means every smoothing step with $\omega = 4/5$ reduces high frequencies by at least a factor of 3/5~\cite{Trottenberg:2000:MUL:374106}.
 
 \subsection{Gauss-Seidel Relaxation}
 The Gauss-Seidel relaxation is again very similar to the Jacobi relaxation, and only differs in the fact that it uses updated function values whenever possible. Again, we use a generalization with a relaxation parameter $\omega$:
@@ -170,14 +170,14 @@ z_h^{m+1}(x_i, y_i)&= \frac{1}{4} \Big ( h^2 f_h(x_i, y_i) + u_h^{m+1}(x_i-h, y_
                   &~~~~~~~~~~~~~~~~~~~~~~~~~~+ u_h^{m+1}(x_i, y_j-h) + u_h^m(x_i,y_j+h) \Big ) \\
         u_h^{m+1} &= u_h^m \omega (z_h^{m+1} - u_h^m) & \nonumber
 \end{align}
-This iteration has much better smoothing properties than the Jacobi iteration. However, these properties now depend on the ordering of grid points. That is because the selection of the grid points that are to be updated first and subsequently used for the calculation of new grid points depends on the ordering: For the red-black ordering, half of the grid points are determined with grid points values that were calculated in the previous iteration and the other half uses "fresh" values from the same iteration. For the lexicographical ordering, the calculation of new grid points needs two new and two old approximations for each point. This choice of ordering also affects the degree of parallelism, as will be shown shortly. 
+This iteration has much better smoothing properties than the Jacobi iteration. However, these properties now depend on the ordering of grid points. That is because the selection of the grid points that are to be updated first and subsequently used for the calculation of new grid points depends on the ordering: For the red-black ordering, half of the grid points are determined with grid point values that were calculated in the previous iteration and the other half uses "fresh" values from the same iteration. For the lexicographical ordering, the calculation of new grid points needs two new and two old approximations for each point. This choice of ordering also affects the degree of parallelism, as will be shown shortly. 
 
-For the Gauss-Seidel iterations, no detailed analysis of the smoothing properties is given here, but the results are as follows: For lexicographical ordering the optimal smoothing factor is $\mu = 0.5$  and  for red-black ordering it is $\mu = 0.25$, both are obtained with $\omega = 1$. 
+For the Gauss-Seidel iterations, no detailed analysis of the smoothing properties is given here, but the results are as follows: For lexicographical ordering the optimal smoothing factor is $\mu = 0.5$  and  for red-black ordering it is $\mu = 0.25$, both are obtained with $\omega = 1$ \cite{Trottenberg:2000:MUL:374106}. 
 
 
 \subsection{Comparison: Jacobi and Gauss-Seidel Smoothers}
 
-For high performance computing, the parallel properties of relaxation methods are especially important. For example, the $\omega$-Jacobi method does not have any sequential dependencies, that means all new approximations of grid point values can be computed at the same time. The degree of parallelism is therefore the same as the number of grid points in $\Omega_h$:
+For high performance computing, the parallel properties of relaxation methods are especially important. For example, the $\omega$-Jacobi method does not have any sequential dependencies. That means all new approximations of grid point values can be computed at the same time. The degree of parallelism is therefore the same as the number of grid points in $\Omega_h$:
 \begin{equation}
 \text{par-deg}(\omega\textrm{-JAC}) = \#\Omega_h
 \end{equation}
@@ -384,7 +384,7 @@ Fig.~\ref{fig:mg_prolongation} shows how the new grid points are calculated by a
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.5\textwidth]{chapters/chapter02/mg_prolongation}
-	\caption{The fine grid values of new points are calculated by taking the average of values of the old grid.}
+	\caption{The fine grid values of new points are calculated by taking the weighted average of values of the old grid.}
 	\label{fig:mg_prolongation}
 \end{figure}
 
