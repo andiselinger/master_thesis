@@ -382,6 +382,7 @@ The parallel implementation in PETSc is again divided into a symbolic phase that
 In PETSc, there are two existing implementations of the symbolic phase for the parallel matrix-matrix multiplication. Similar to the sequential case, these implementations are either scalable or not scalable and again, the difference lies in the memory requirements; the non-scalable implementation has a complexity of $O(N_B)$ (with $N_B$ being the number of columns in $B$), and the scalable implementation only needs $O(\textit{nnz}_B)$ memory (with \textit{nnz}$_B$ being the number of non-zeros in $B$).
 
 \subsection{Existing Implementations of Parallel MatMatMult}
+\label{sec:existing_impl}
 The scalable and the non-scalable implementations of the symbolic parallel matrix matrix multiplication are almost the same. The only difference is that a fixed-size list is implemented for the non-scalable case (its length is the number of columns in the matrix $B$), while the list in the scalable implementation grows when more non-zero entries are found in the course of the multiplication. Due to these similarities, they are now both discussed at the same time.
 
 
@@ -458,11 +459,11 @@ First however, the column indices of the product $A_{\textit{loc, diag}}B_{\text
 \begin{figure}[tbp]
 \centering
 {\includegraphics[width=0.7\textwidth]{mm_diag_row}}
-\caption{A $6 \times 6$ matrix is divided between three processes. Since the column index in the diagonal part of the matrix always starts with 0, each process has to add the row number of its first local row in order to obtain a global column index.}
+\caption{A $6 \times 6$ matrix is divided between three processes. Since the column index in the diagonal part of the matrix always starts with 0, each process has to add the global row index of its first local row in order to obtain a global column index.}
 \label{fig:diag_row}
 \end{figure}
 
-After each row has been merged to one result row of $C$, the corresponding, the arrays with information about non-zeros can be set again (L39) and  another \texttt{ci} entry is added (L40). When all rows of $C$ are finished, the parallel matrix \texttt{Cmpi} is again created by preallocating each row and then setting the entries for each row.
+After each row has been merged to one result row of $C$, the arrays with information about non-zeros can be set again (L39) and  another \texttt{ci} entry is added (L40). When all rows of $C$ are finished, the parallel matrix \texttt{Cmpi} is again created by preallocating each row and then setting the entries for each row.
 \vspace{5mm}
 
 \belowcaptionskip=-10pt

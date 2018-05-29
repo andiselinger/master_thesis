@@ -118,7 +118,7 @@ The reason for this lack in performance for the \textit{scalable} algorithm lies
 \end{figure}
 
 \subsection{Comparison: Non-Scalable vs Sequential MPI}
-The existing \textit{non-scalable} algorithm was compared to the new \textit{sequential MPI} algorithm, which uses sequential matrix multiplication routines on many MPI ranks at the same time. This was tested for 2d and 3d stencils, and for different grid sizes.
+The existing \textit{nonscalable} algorithm (see Section~\ref{sec:existing_impl}) was compared to the new \textit{sequential MPI} algorithm (see Section~\ref{sec:seq_mpi}), which uses sequential matrix multiplication routines on many MPI ranks at the same time. This was tested for 2d and 3d stencils, and for different grid sizes.
 
 \subsubsection*{2d stencils}
 Fig.~\ref{fig:mat_ex_test_ex2_times_2d} shows the results for different 2d stencils and for 32 processes (4 nodes with 8 processes each). 
@@ -140,7 +140,7 @@ For the 2d, 13-point stencil and big grids, the \textit{seq mpi} algorithm final
 \end{figure}
 
 \subsubsection*{3d stencils}
-A local grid size of up to $100 \times 100 \times 100$ (which corresponds to $317 \times 317 \times 317$ in global size) and again, 32 MPI-ranks, were used to evaluate the performance of the two implementations.  Fig.~\ref{fig:mat_ex_test_ex2_times_3dsmall} shows the results for small grids. For both stencils, we observe that for small grids, the time per unknown is almost 3 times higher than for the big grids. Again, this is due to latencies that take a big share of the total time when dealing with small grids.
+A local grid size of up to $100 \times 100 \times 100$ (which corresponds to $317 \times 317 \times 317$ in global size) with 32 MPI-ranks was used to evaluate the performance of the two implementations.  Fig.~\ref{fig:mat_ex_test_ex2_times_3dsmall} shows the results for small grids. For both stencils, we observe that for small grids, the time per unknown is almost 3 times higher than for the big grids. Again, this is due to latencies that take a big share of the total time when dealing with small grids.
 
 For the 3d, 7-point stencil and for both implementations, the time per unknown changes only very little for grids with $N \gtrapprox 40$ (around 2$\mu  s$ per unknown for the \textit{nonscalable} implementation). The \textit{sequential MPI} implementation is around 25\% slower. For the 3d, 13-point stencil, the difference between the two implementations is very little with no clearly faster version. 
 
@@ -258,7 +258,7 @@ The same experiment was done with a 3d system and a very big stencil. The system
 
 \subsubsection*{Comparison of MatSetVal in different MatMatMult implementations}
 
-Since the MatSetVal operation needs much more time than expected in the \textit{sequential mpi} implementation (sometimes more than a third of the total execution time), its duration was compared to the one of the \textit{non-scalable} implementation. The results can be seen in Fig.~\ref{fig:setvalues}. It became clear that the {MatSetVal} operation is always faster in the \textit{nonscalable} implementation, even though the same matrix values are set. The \textit{nonscalable} implementation only needs between 42\% and 77\% percent of the time the \textit{sequential mpi} implementation needs for setting the values of the matrix. 
+Since the MatSetVal operation needs much more time than expected in the \textit{sequential MPI} implementation (sometimes more than a third of the total execution time), its duration was compared to the one of the \textit{nonscalable} implementation. The results can be seen in Fig.~\ref{fig:setvalues}. It became clear that the {MatSetVal} operation is always faster in the \textit{nonscalable} implementation, even though the same matrix values are set. The \textit{nonscalable} implementation only needs between 42\% and 77\% percent of the time the \textit{sequential MPI} implementation needs for setting the values of the matrix. 
 
 However, the result of 42\% was obtained with an extremely small matrix. For bigger (and more relevant) matrices, still around 7-10\% of the time spent on the symbolic calculation could be saved if we assume that a third of time was spent on {MatSetVal} and the {MatSetVal} performance of the {nonscalable} implementation can be reached.  Therefore, this behavior still has to be analyzed further.
 
@@ -290,9 +290,9 @@ As can be seen in Fig.~\ref{fig:mpi_symnum}, the ratio of time spent on the symb
 Next the times for different stages of the multigrid solvers GAMG and Hypre were analyzed. 
 GAMG is the multigrid preconditioner that is implemented in PETSc and Hypre is an external package \cite{hypre-web-page}. 
 
-The GAMG multigrid implementation is based on the hierarchy that can be seen in Fig.~\ref{fig:multigrid_hierarchy_gamg}. This figure also shows the percentage of time that is spent on each stage of the implementation, when a single V-cycle is performed. 
+The GAMG multigrid implementation is based on the hierarchy that can be seen in Fig.~\ref{fig:multigrid_hierarchy_gamg}. This figure also shows the percentage of time that is spent on each stage of the implementation, when a single V-cycle is performed. The grid had a global size of $512\times 512$ and 256 processes were used.
 
-All computational work is done in the KSPSolve phase. This phase is divided into a setup phase (PCSetUp) and a phase where the preconditioner is applied (PCApply). In the setup phase, the entire multigrid hierarchy is build up. This takes around 91\% of the time spent on KSPSolve. In this phase, the coarse grid is created algebraically (PCGAMGCoarse\_AGG, 37.3\% of the setup phase), and the fine grid operators are created with Galerkin product
+All computational work is done in the KSPSolve phase. This phase is divided into a setup phase (PCSetUp) and a phase where the preconditioner is applied (PCApply). In the setup phase, the entire multigrid hierarchy is build up. This takes around 91\% of the time spent on KSPSolve. In this phase, the coarse grid is created algebraically (PCGAMGCoarse\_AGG, 37.3\% of the setup phase), and the fine grid operators are created with the Galerkin product
 \begin{equation}
 L_H = I_h^H L_h I_H^h = (I_H^h)^T L_h I_H^h
 \end{equation}
@@ -305,9 +305,9 @@ as described in Chapter~2. For that, regular matrix-matrix multiplications (MatM
 	\label{fig:multigrid_hierarchy_gamg}
 \end{figure}
 
-After the setup is complete, the preconditioner is applied with PCApply. That only takes around a tenth of the time that is spent on the setup phase, since only one iteration is performed here. When there are only a few iterations, the PCApply is faster than PCSetUp, while it takes more time with many iterations. In a well-balanced solver, these operations should take roughly the same amount of time. 
+After the setup is complete, the preconditioner is applied with PCApply. That only takes around a tenth of the time that is spent on the setup phase, since only one iteration is performed here. When there are only a few iterations, PCApply is faster than PCSetUp, while it takes more time with many iterations. In a well-balanced solver, these operations should take roughly the same amount of time. 
 
-PCApply basically comprises a MatMult and a MatSOR stage. MatSOR (Matrix successive over relaxation) is a Jacobi iteration with a relaxation parameter, so this is the step where the error smoothing is done. This only takes 6.3\% of the time for the PCApply stage. Another step that is included here is a direct solve within PCApply.
+PCApply basically comprises a MatMult and a MatSOR stage. MatSOR (Matrix successive over relaxation) is a Jacobi iteration with a relaxation parameter, so this is the step where the error smoothing is done. This only takes 6.3\% of the time for the PCApply stage. Other steps that are included within PCApply are a direct solve and bookkeeping operations.
 
 Since Hypre is an external package, there is no such detailed output about different stages of this preconditioner. In Fig.~\ref{fig:multigrid_hierarchy_hypre}, the division of PCSetUp and PCApply is shown. Now, the share for the time spent on PCApply increased to around a third. That is due to a major change in the setup time: The setup in Hypre only needs around a ninth of the time the setup in GAMG needs. 
 
@@ -339,7 +339,7 @@ However, the ideal results cannot be obtained because of relatively slow network
 \subsection{Strong Scaling}
 
 
-Strong scaling results were obtained for measuring the performance of different solvers for a linear system $Ax = b$ that arose from discretizing Poisson's equation. The iterative solvers for the system relied on an iteration method called Generalized minimal residual method (GMRES), and also a direct solver, the LU decomposition, was used. All programs were only stopped when a specific accuracy of the result was reached. The following methods were tested:
+Strong scaling results were obtained for measuring the performance of different solvers for a linear system $Ax = b$ that arose from discretizing Poisson's equation. The iterative solvers for the system relied on an iteration method called Generalized minimal residual method (GMRES) \cite{saad1986gmres}, and also a direct solver, the LU decomposition, was used. All programs were only stopped when a specific accuracy of the result was reached. The following methods were tested:
 \begin{itemize}
 \item Jacobi preconditioner with GMRES,
 \item No preconditioner, so only the GMRES method is used here,
@@ -355,11 +355,11 @@ The solution of the hydrostatic equation was one of the experiments that were pe
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth]{ex2_times}
-	\caption{Strong scaling: Solving a linear system $Au = x$ with $2^{18} = 262k$ global unknowns with different solvers.} 
+	\caption{Strong scaling: Solving a linear system $Au = x$ with $2^{18} = 262k$ global unknowns with different solvers until the results have converged.} 
 	\label{fig:res_ex2_strong_time}
 \end{figure}
 
-The strong scaling properties of \textbf{another example} can be seen in Fig.~\ref{fig:res_ex48}, where a Jacobi preconditioner is used to solve a system $Au = b$. Here, the difference between using 4 MPI-ranks per node and using 16 MPI-ranks per node was observed. The total number of MPI-ranks was the same for both cases.
+The strong scaling properties of \textbf{another example} can be seen in Fig.~\ref{fig:res_ex48}, where the GAMG multigrid solver is used to solve a system $Au = b$ that arises from the nonlinear hydrostatic equation for ice flow. Here, the difference between using 4 MPI-ranks per node and using 16 MPI-ranks per node was observed. The total number of MPI-ranks was the same for both cases.
 
 The results show that the difference between 4 and 16 ranks/node are rather small. The reason why the performances are so similar is that the performance is limited by latencies. These latencies are almost independent of the number of ranks per node. The small difference in favour of 16 ranks/node is due to the high computational work for each rank.
 
@@ -370,7 +370,7 @@ If less than ca. 15,000 unknowns are to be computed by each process (rank), the 
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth]{ex48}
-	\caption{Strong scaling: An example of the use of a Jacobi preconditioner that shows strong scaling effects. For less than ca. 15k unknowns per process, the computing power of additional ranks cannot be fully exploited any more. It can also be seen that 16 ranks/node is very often slightly faster than 4 ranks/node, when using the same total number of ranks.} 
+	\caption{Strong scaling: An example of the use of a GAMG solver that shows strong scaling effects. For less than ca. 15k unknowns per process, the computing power of additional ranks cannot be fully exploited any more. It can also be seen that 16 ranks/node is very often slightly faster than 4 ranks/node, when using the same total number of ranks.} 
 	\label{fig:res_ex48}
 \end{figure}
 
@@ -383,11 +383,11 @@ The weak scaling properties of different solvers were tested for both a limited 
 
 \subsubsection*{Max. 50 iterations}
 
-For this experiment, a system $Au = x$ with 262k unknowns per MPI rank was solved. This corresponds to a $512 \times 512$ local grid. The calculation was stopped after 50 iterations in order to not take too much time. Hence, the results differ in accuracy for different solvers and the absolute time until 50 iterations were performed is not relevant. What is relevant, though, is the slope of each curve. The results are shown in Fig.~\ref{fig:ex2_weak_time}. 
+For this experiment, a system $Au = x$ with 262k unknowns per MPI rank was solved. This corresponds to a $512 \times 512$ local grid. A 2d, 5-point stencil was used and the calculation was stopped after 50 iterations in order to not take too much time. Hence, the results differ in accuracy for different solvers and the absolute time until 50 iterations were performed is not relevant. What is relevant, though, is the slope of each curve. The results are shown in Fig.~\ref{fig:ex2_weak_time}. 
 
 A solver with good weak scaling properties, i.e. an execution time that does not depend much on the global problem size, \textit{seems to be} the Jacobi preconditioner. Here the performance per core only differs by a factor 2 when 1024 instead of 1 cores are used ($\alpha_{1 \rightarrow 1024} = 2$). Also, the other iterative solvers perform quite well:  $\alpha_{1 \rightarrow 1024}$ is around 4 if no preconditioner is used, around 8 for GAMG, and 10 for Hypre. 
 
-On the other hand, solving the system directly with the LU factorization does not scale at all. The reason for that is quite simple; there is no parallel implementation for this direct solver.
+On the other hand, solving the system directly with the LU factorization does not scale at all. The reason for that is quite simple; there is no parallel implementation for this direct solver in PETSc.
 
 \begin{figure}[tb]
 	\centering
@@ -397,7 +397,7 @@ On the other hand, solving the system directly with the LU factorization does no
 \end{figure}
 
 \subsubsection*{Unlimited iterations}
-The time until a specific accuracy of the result is reached can be seen in Fig.~\ref{fig:ex2_weak_nomaxit}. That means there is no maximum number of iterations. Now the local size of the system was reduced from $512\times 512$ to $128\times 128$ in order to not take too much time. 
+The time until a specific accuracy of the result is reached can be seen in Fig.~\ref{fig:ex2_weak_nomaxit}. That means there is no maximum number of iterations. Now the local size of the system was reduced from $512\times 512$ to $128\times 128$ in order to not take too much time. The 2d, 5-point stencil stays the same.
 
 The results about scalability that were obtained from the last experiment prove to be only partly true now: While $\alpha_{1 \rightarrow 1024}$ is the same for the multigrid solvers GAMG and Hypre ($\alpha_{1 \rightarrow 1024, \textrm{GAMG}} =8$ and $\alpha_{1 \rightarrow 1024, \textrm{Hypre}} =10$), this factor is very different for the Jacobi preconditioner and for solving the system without preconditioner: For Jacobi, $\alpha_{1 \rightarrow 1024}$ changed from 2 to 30 and for no preconditioner from 4 to 100. The reason for that is that for these solvers, the number of iterations changes considerably when the global problem size changes. This shows another advantage of multigrid methods: The number of necessary iterations is almost independent of the global problem size.
 

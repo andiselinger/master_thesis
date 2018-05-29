@@ -12,11 +12,13 @@
 % be included.
 
 \chapter*{Abstract}
-\begin{SingleSpace}
+%\begin{SingleSpace}
 
-\initial{S}imulations of electric fields are an essential part of the development of semiconductors. Such simulations rely on solving the Poisson equation with linear solvers, and some of these solvers, in turn, heavily rely on matrix-matrix multiplications. Since the matrices that arise for such simulations can have millions to billions rows and columns, highly efficient algorithms that run on multiple compute nodes are necessary. 
+\initial{S}imulations of electric fields are an essential part of the development of semiconductors. Such simulations rely on solving the Poisson equation with linear solvers, and some of these solvers, in turn, heavily rely on matrix-matrix multiplications. Since the matrices that arise for such simulations can have millions to billions of rows and columns, highly efficient algorithms that run on multiple compute nodes are necessary. 
 
-In this thesis, new algorithms for both sequential and parallel matrix-matrix multiplication were implemented, with the goal of speeding up the linear solver they are part of. Also different linear solvers are evaluated for their speed and how well-suited they are for a large number of processors.
+In this thesis, new algorithms for both sequential and parallel matrix-matrix multiplication were implemented, with the goal of speeding up the linear solver they are part of. For this, an approach where sequential matrix multiplication is executed on many compute nodes at the same time was implemented. By doing so, any advances in sequential algorithms are reflected in their parallel counterpart.
 
-\end{SingleSpace}
+As matrix-matrix multiplication is an essential part of modern linear solvers, they are evaluated for their performance and suitability for a large number of processors. Also, a 
+
+%\end{SingleSpace}
 \clearpage
