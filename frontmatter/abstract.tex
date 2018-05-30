@@ -14,11 +14,10 @@
 \chapter*{Abstract}
 %\begin{SingleSpace}
 
-\initial{S}imulations of electric fields are an essential part of the development of semiconductors. Such simulations rely on solving the Poisson equation with linear solvers, and some of these solvers, in turn, heavily rely on matrix-matrix multiplications. Since the matrices that arise for such simulations can have millions to billions of rows and columns, highly efficient algorithms that run on multiple compute nodes are necessary. 
+\initial{S}imulations of electric fields are an essential part of the development of semiconductors. Such simulations often rely on solving the Poisson equation with linear solvers, and some of these solvers, in turn, heavily rely on matrix-matrix multiplications. Since the matrices that arise for such simulations can have millions to billions of rows and columns, highly efficient algorithms that run on multiple compute nodes are necessary. 
 
-In this thesis, new algorithms for both sequential and parallel matrix-matrix multiplication were implemented, with the goal of speeding up the linear solver they are part of. For this, an approach where sequential matrix multiplication is executed on many compute nodes at the same time was implemented. By doing so, any advances in sequential algorithms are reflected in their parallel counterpart.
+In this thesis, new algorithms for both sequential and parallel matrix-matrix multiplication were implemented, with the goal of speeding up the linear solver they are part of. For this, an approach where sequential matrix multiplications are executed on many compute nodes at the same time was implemented. By doing so, any advances in sequential algorithms can be reflected in their parallel counterpart.
 
-As matrix-matrix multiplication is an essential part of modern linear solvers, they are evaluated for their performance and for their suitability for a high number of processors.
-
+As matrix-matrix multiplication is an essential part of modern linear solvers, they are evaluated for their performance and for their suitability for a high number of processors. This evaluation provides very important information for choosing an adequate solver.
 %\end{SingleSpace}
 \clearpage

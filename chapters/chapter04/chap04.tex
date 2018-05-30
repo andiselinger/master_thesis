@@ -91,14 +91,22 @@ Since there is no separation of different stages for the \textit{combined} algor
 
 
 \section{The \textit{PtAP} Multiplication}
-Another operation that was evaluated is the sparse matrix product $C = P^T A P$ (Galerkin product) that was introduced in Section~\ref{sec:PtAP}. This can either be computed directly with a specialized algorithm, or by performing one of the naive approaches $C = (P^T A) P$ or $C = P^T (A P)$. The results can be seen in Fig.~\ref{fig:ex2_ptap}. Since the results are so similar to each other, a high accuracy was necessary here, which was obtained by taking the median value of 41 measurements.
+Sometimes there are not only two matrices that have to be multiplied with each other, but three. An example is the (sparse) matrix product $C = P^T A P$ (Galerkin product) that was introduced in Section~\ref{sec:PtAP}. This can either be computed directly, or by performing one of the naive approaches $C = (P^T A) P$ or $C = P^T (A P)$. The direct algorithm works by first calling a method to transpose $P$, and then calculates the product $C = P^T AP$.
 
-As can be seen, the direct method is slightly faster than the two other methods for all grid sizes. 	Since the performance differences are so small, it was decided that no further optimizations on this algorithm are to be done for now.
+The results can be seen in Fig.~\ref{fig:ex2_ptap}. Since the results are so similar to each other, a high accuracy was necessary here, which was obtained by taking the median value of 41 measurements.
+
+As can be seen, the direct method is slightly (around 5\%) faster than the two other methods for all grid sizes. It was also measured that the direct method needs only 6-8\% of the total matrix multiplication time to transpose the matrix (for all grid sizes). The rest is spent on actually multiplying matrices with each other. 
+
+Another measurement concerns the ratio of the symbolic calculation to the total time of matrix multiplication: This yielded very similar results for $P^TAP$, $(P^TA)P$, and $P^T(AP)$: For all three implementations, 70-80\% of time is spent on the symbolic part. The rest is attributed to the numeric calculation. This matches with the results of the regular matrix multiplication $C = AB$.
+ 
+Since the performance differences are so small, it was decided that no further optimizations on this algorithm are to be done for now. 
+
+
 
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.99\textwidth,  trim={0 2.cm 0 6cm},clip]{ex2_PtAP}
-	\caption{Normalized time for different implementation of the Galerkin product.} 
+	\caption{Normalized time for different implementations of the Galerkin product.} 
 	\label{fig:ex2_ptap}
 \end{figure}
 
@@ -265,13 +273,13 @@ However, the result of 42\% was obtained with an extremely small matrix. For big
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=1\textwidth, trim={0 2cm 0 7cm},clip]{setvalues}
-	\caption{Normalized time for the \textit{setVal} operation. This is the step where the results of the symbolic calculation are written to the matrix.} 
+	\includegraphics[width=0.97\textwidth, trim={0 2cm 0 7.cm},clip]{setvalues}
+	\caption{Normalized time for the \textit{MatSetVal} operation. This is the step where the results of the symbolic calculation are written to the matrix.} 
 	\label{fig:setvalues}
 \end{figure}
 
 \subsubsection*{Conclusion of this section}
-Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetValue routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal, the results show a high potential for obtaining better performance through optimizations.
+Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetVal routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal, the results show a high potential for obtaining better performance through optimizations.
 
 
 \subsection{Time Ratio: Symbolic Calculation to Total Time}
@@ -281,14 +289,13 @@ As can be seen in Fig.~\ref{fig:mpi_symnum}, the ratio of time spent on the symb
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=1\textwidth, trim={0 3.cm 0 7cm},clip]{mpi_symnum}
+	\includegraphics[width=0.97\textwidth, trim={0 3.cm 0 7cm},clip]{mpi_symnum}
 	\caption{Percentage of time spent on the symbolic stage of the matrix multiplication of the total execution time for the \textit{sequential MPI} implementation. The rest to 100\% is spent on the numeric stage.} 
 	\label{fig:mpi_symnum}
 \end{figure}
 
 \section{Stages of Multigrid}
-Next the times for different stages of the multigrid solvers GAMG and Hypre were analyzed. 
-GAMG is the multigrid preconditioner that is implemented in PETSc and Hypre is an external package \cite{hypre-web-page}. 
+After the matrix multiplication has been analyzed, we move on to a higher level. Now we put the focus on multigrid solvers (that rely on matrix multiplications) and analyze the time that is needed for different stages of these solvers. With PETSc, two multigrid solvers can be used: GAMG, which is the native multigrid implementation in PETSc and Hypre, an external package \cite{hypre-web-page}. 
 
 The GAMG multigrid implementation is based on the hierarchy that can be seen in Fig.~\ref{fig:multigrid_hierarchy_gamg}. This figure also shows the percentage of time that is spent on each stage of the implementation, when a single V-cycle is performed. The grid had a global size of $512\times 512$ and 256 processes were used.
 
@@ -322,9 +329,9 @@ Since Hypre is an external package, there is no such detailed output about diffe
 
 \section{Strong and Weak Scaling Properties of Solvers}
 
-In this section the strong scaling and weak scaling capabilities of different solvers are evaluated. Testing a program for its strong scaling capabilities means that there is a fixed problem size and the problem is solved by using different numbers of processes. Ideally, the time is inversely proportional to the number of processes used: $T \propto 1/\textit{\#processes}$. For weak scaling, the problem size per process is fixed and the program is executed with different numbers of processes, so the total problem size changes. Both scaling methods are illustrated in Fig.~\ref{fig:strong_weak_scaling}. 
+When solvers are executed on many processor cores, it is useful to know how their properties change if different numbers of cores or different problem sizes are used. In this section two different scaling properties are evaluated for several solvers. 
 
-However, the ideal results cannot be obtained because of relatively slow networks and latencies.
+Testing a program for its \textit{strong scaling} capabilities means that there is a fixed problem size and the problem is solved by using different numbers of processes. Ideally, the time is inversely proportional to the number of processes used: $T \propto 1/\textit{\#processes}$. For \textit{weak scaling}, the problem size per process is fixed and the program is executed with different numbers of processes, so the total problem size changes. Both scaling methods are illustrated in Fig.~\ref{fig:strong_weak_scaling}. However, the ideal results cannot be obtained because of relatively slow networks and latencies.
 
 
 
@@ -359,7 +366,7 @@ The solution of the hydrostatic equation was one of the experiments that were pe
 	\label{fig:res_ex2_strong_time}
 \end{figure}
 
-The strong scaling properties of \textbf{another example} can be seen in Fig.~\ref{fig:res_ex48}, where the GAMG multigrid solver is used to solve a system $Au = b$ that arises from the nonlinear hydrostatic equation for ice flow. Here, the difference between using 4 MPI-ranks per node and using 16 MPI-ranks per node was observed. The total number of MPI-ranks was the same for both cases.
+The strong scaling properties of \textbf{another example} can be seen in Fig.~\ref{fig:res_ex48}, where the GAMG multigrid solver is used to solve a system $Au = b$ that arises from the nonlinear hydrostatic equation for ice flow. Here, the difference between using 4 MPI-ranks per node and using 16 MPI-ranks per node was evaluated. The total number of MPI-ranks was the same for both cases.
 
 The results show that the difference between 4 and 16 ranks/node are rather small. The reason why the performances are so similar is that the performance is limited by latencies. These latencies are almost independent of the number of ranks per node. The small difference in favour of 16 ranks/node is due to the high computational work for each rank.
 
@@ -399,13 +406,13 @@ On the other hand, solving the system directly with the LU factorization does no
 \subsubsection*{Unlimited iterations}
 The time until a specific accuracy of the result is reached can be seen in Fig.~\ref{fig:ex2_weak_nomaxit}. That means there is no maximum number of iterations. Now the local size of the system was reduced from $512\times 512$ to $128\times 128$ in order to not take too much time. The 2d, 5-point stencil stays the same.
 
-The results about scalability that were obtained from the last experiment prove to be only partly true now: While $\alpha_{1 \rightarrow 1024}$ is the same for the multigrid solvers GAMG and Hypre ($\alpha_{1 \rightarrow 1024, \textrm{GAMG}} =8$ and $\alpha_{1 \rightarrow 1024, \textrm{Hypre}} =10$), this factor is very different for the Jacobi preconditioner and for solving the system without preconditioner: For Jacobi, $\alpha_{1 \rightarrow 1024}$ changed from 2 to 30 and for no preconditioner from 4 to 100. The reason for that is that for these solvers, the number of iterations changes considerably when the global problem size changes. This shows another advantage of multigrid methods: The number of necessary iterations is almost independent of the global problem size.
-
-In order to conclude this section, we take a look at the absolute numbers rather than scalability ratios. The Hypre multigrid method shows the best results (except for one outlier) as it needs only a few dozens of $\mu s$ to solve a local grid of size $512\times 512$. GAMG is  10-15\% slower than Hypre and the other tested solvers are not competitive.
-
 \begin{figure}[tb]
 	\centering
 	\includegraphics[width=0.99\textwidth]{ex2_weak_nomaxit}
 	\caption{Weak scaling: Solving a linear system $Au = x$ with $2^{14} = 16384$ unknowns per process with different solvers. } 
 	\label{fig:ex2_weak_nomaxit}
 \end{figure}
+
+The results about scalability that were obtained from the last experiment prove to be only partly true now: While $\alpha_{1 \rightarrow 1024}$ is the same for the multigrid solvers GAMG and Hypre ($\alpha_{1 \rightarrow 1024, \textrm{GAMG}} =8$ and $\alpha_{1 \rightarrow 1024, \textrm{Hypre}} =10$), this factor is very different for the Jacobi preconditioner and for solving the system without preconditioner: For Jacobi, $\alpha_{1 \rightarrow 1024}$ changed from 2 to 30 and for no preconditioner from 4 to 100. The reason for that is that for these solvers, the number of iterations changes considerably when the global problem size changes. This shows another advantage of multigrid methods: The number of necessary iterations is almost independent of the global problem size.
+
+In order to conclude this section, we take a look at the absolute numbers rather than scalability ratios. The Hypre multigrid method shows the best results (except for one outlier) as it needs only a few dozens of $\mu s$ to solve a local grid of size $512\times 512$. GAMG is  10-15\% slower than Hypre and the other tested solvers are not competitive.
