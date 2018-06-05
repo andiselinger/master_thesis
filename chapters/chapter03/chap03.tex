@@ -131,12 +131,12 @@ are diagonal matrices, and
 
 are off-diagonal matrices, each of them local to their respective process and each of them starting with the local column index 0. This means that the global column index might be different than the local one, so this global index might have to be computed when the matrix is accessed.
 
-In order to set up parallel matrices quickly, preallocation of memory is crucial. For that, the number of non-zero entries in the diagonal and off-diagonal parts of each row has to be known (or at least an approximate minimum value should be known). Then, the memory for each row can be preallocated and does not have to be extended during the computation, which would be much more expensive than the preallocation \cite{petsc-web-page}.
+In order to set up parallel matrices quickly, preallocation of memory is crucial. For that, the number of non-zero entries in the diagonal and off-diagonal parts of each row has to be known (or at least an approximate maximum value should be known). Then, the memory for each row can be preallocated and does not have to be extended during the computation, which would be much more expensive than the preallocation \cite{petsc-web-page}.
 
 
 
 \section{Introduction to Sparse Matrix-Matrix Multiplication}
-A function that is very important for the applications described in this work, is the Sparse Matrix-Matrix Multiplication (SpGEMM)\footnote{The name SpGEMM is derived from BLAS routines, which include DGEMM for double precision general matrix-matrix multiplication, DSYMM for double precision symmetric matrix multiplication, ZHEMM for complex hermitian matrix multiplication, etc.} $C = A B$, with sparse matrices $A, B$ and $C$. In Chapter ~2, this product was used to compute coarse grid operators $L_H$ by multiplying the fine grid operator $L_h$ with restriction interpolation operators: $L_H = I_h^HL_h I_H^h$.
+A function that is very important for the applications described in this work is the Sparse Matrix-Matrix Multiplication (SpGEMM)\footnote{The name SpGEMM is derived from BLAS routines, which include DGEMM for double precision general matrix-matrix multiplication, DSYMM for double precision symmetric matrix multiplication, ZHEMM for complex hermitian matrix multiplication, etc.} $C = A B$, with sparse matrices $A, B$ and $C$. In Chapter ~2, this product was used to compute coarse grid operators $L_H$ by multiplying the fine grid operator $L_h$ with restriction interpolation operators: $L_H = I_h^HL_h I_H^h$.
 However, compared to the dense GEMM, SpGEMM usually suffers from very poor FLOP performance on parallel hardware. This is due to various reasons:  
 \begin{itemize}
 \item Irregular memory access patterns: Depending on the structure of the matrices, there are computation steps where not all rows or elements of rows of a matrix are needed, so they are just skipped, which lowers the hit rate of the cache.
@@ -166,7 +166,7 @@ However, due to very irregular memory access patterns and low data locality, dir
 \label{fig:matmult_petsc}
 \end{figure}
 
-The most efficient way to compute the sparse matrix product, is to see it as a weighted summation of rows of \textit{B}. Therefore, this approach is implemented in PETSc. Here, a whole row of \textit{C} is calculated at once. Fig.~\ref{fig:matmult_petsc} shows an illustration of how this multiplication $\textit{C} = \textit{AB}$ works in PETSc. In order to calculate a row in $\textit{C}$, weighted rows of $B$ are added to each other. More precisely; a row $b_j$ is weighted with a factor $a_{ij}$, before it is added to the other rows of $B$ to form a row $c_i$. If an element $a_{ij}$ of a row $a_i$ is zero, a whole row $b_j$ can be skipped. 
+The most efficient way to compute the sparse matrix product is to see it as a weighted summation of rows of \textit{B}. Therefore, this approach is implemented in PETSc. Here, a whole row of \textit{C} is calculated at once. Fig.~\ref{fig:matmult_petsc} shows an illustration of how this multiplication $\textit{C} = \textit{AB}$ works in PETSc. In order to calculate a row in $\textit{C}$, weighted rows of $B$ are added to each other. More precisely; a row $b_j$ is weighted with a factor $a_{ij}$, before it is added to the other rows of $B$ to form a row $c_i$. If an element $a_{ij}$ of a row $a_i$ is zero, a whole row $b_j$ can be skipped. 
 
 In the example of Fig.~\ref{fig:matmult_petsc} this means that the first row of \textit{C} is computed by adding three rows (vectors) to each other: the first row of $B$ scaled with the first element of $a_1$, the second row of $\textit{B}$ scaled with the second element of $a_1$, and the fourth row of $B$ scaled with the fourth element of $a_1$.
 
@@ -298,7 +298,7 @@ c)\\
 \end{figure}
 
 
-\subsection{Intel MatMatMult}
+\subsection{Combined MatMatMult}
 An implementation that was written in the course of this thesis is based on an idea by Patwary et al. of Intel \cite{intel_algorithm}. It is similar to the \textit{sorted} algorithm, so it also uses a dense array with a length of the number of columns in the matrix. The difference to the \textit{sorted} algorithm is that the  numerical calculation is performed at the same time as the symbolic calculation. This algorithm is sketched in Listing~\ref{alg:intel}.
 
 The first step here is an iteration through all rows of $A$ (L5), where an upper bound on the memory requirements of $C$ is determined, which is followed by allocating memory for the matrix $C$ (L11). This includes memory for the arrays \texttt{ca}, \texttt{cj}, \texttt{cj} and for the dense arrays \texttt{c\_row\_val\_dense} (for the numerical values of a row of C) and for \texttt{c\_row\_idx\_flags} (for the flags that indicate if a specific column index has been added to the result).
@@ -318,7 +318,7 @@ After every row of the matrix $A$ has been processed like that, the sequential m
 
 
 \belowcaptionskip=-10pt
-\lstinputlisting[label=alg:intel,caption={A pseudo-code sketch of the Intel algorithm for sequential sparse matrix-matrix multiplication. The symbolic and numeric values are calculated at the same time.}]{intel_seq.cpp}
+\lstinputlisting[label=alg:intel,caption={A pseudo-code sketch of the combined algorithm for sequential sparse matrix-matrix multiplication. The symbolic and numeric values are calculated at the same time.}]{intel_seq.cpp}
 
 
 \section{Numeric Phase}
@@ -366,8 +366,8 @@ On the other hand, if there are any off-diagonal elements in $A$, the process ha
 \begin{figure}[tb]
 \centering
 \vspace{5mm}
-{\includegraphics[width=0.95\textwidth]{parallel/spgemm-parallel-2} Figures by Karl Rupp \cite{karli_LANS_image}.}
-\caption{If there are off-diagonal elements in $A$, the process has to retrieve rows of $B$ from other processes.}
+{\includegraphics[width=0.95\textwidth]{parallel/spgemm-parallel-2}}
+\caption{If there are off-diagonal elements in $A$, the process has to retrieve rows of $B$ from other processes. Figures by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:parallel-2}
 \end{figure}
 
@@ -421,7 +421,7 @@ where only the last product relies on non-local rows. This asynchronous flow is 
 \begin{figure}[tb]
 \centering
 \includegraphics[width=0.95\textwidth]{mpi_workflow}
-\caption{\textit{Left:} The work flow with as it is implemented in the new implementation: The matrix multiplication is split in three parts and non-local rows of \textit{B} are retrieved before any matrix calculations start. \textbf{Right:} The non-local rows of \textit{B} are retrieved at the same time as local multiplications are performed. This is not implemented yet.}
+\caption{\textbf{Left:} The work flow with as it is implemented in the new implementation: The matrix multiplication is split in three parts and non-local rows of \textit{B} are retrieved before any matrix calculations start. \textbf{Right:} The non-local rows of \textit{B} are retrieved at the same time as local multiplications are performed. This is not implemented yet.}
 \label{fig:mpi_workflow}
 \end{figure}
 
@@ -454,7 +454,7 @@ Now the calculation of $A_{\textit{loc, off}} B_{\textit{nonloc}}$ can start (L2
 Next, the addition of these three matrix products starts (L27). That just means that the three arrays containing the j-indices are merged row by row, as can be seen in the example in Fig.~\ref{fig:rowmerge}. This is exactly the same principle as in the sequential \textit{rowmerge} algorithm. The only difference is that here result rows of three products are merged, while in \textit{rowmerge} many rows of \textit{B} are merged.
 
 
-First however, the column indices of the product $A_{\textit{loc, diag}}B_{\textit{loc, diag}}$ have to be corrected, because the rows of this product always start with zero (L29). Therefore, the global row number of the first local row of the process has to be added to the column index, as illustrated in the example in Fig.\ref{fig:diag_row}. This results in the global column index.
+First, however, the column indices of the product $A_{\textit{loc, diag}}B_{\textit{loc, diag}}$ have to be corrected, because the rows of this product always start with zero (L29). Therefore, the global row number of the first local row of the process has to be added to the column index, as illustrated in the example in Fig.~\ref{fig:diag_row}. This results in the global column index.
 
 \begin{figure}[tbp]
 \centering

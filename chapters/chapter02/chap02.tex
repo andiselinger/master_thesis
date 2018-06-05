@@ -245,7 +245,7 @@ Since this equation has the same form as the original problem $L_hu_h^m = f_h$, 
 L_H v_H^m = d_H^m.
 \end{equation}
 
-We see why it is much cheaper to solve the system on the coarse grid, when we take a look at the sizes of the corresponding system matrices again: Since the system has $N^2$ unknowns, the number of grid points (unknowns) quarters when increasing the grid size from $h$ to $2h$.
+We see why it is much cheaper to solve the system on the coarse grid, when we take a look at the sizes of the corresponding system matrices for the two-dimensional case: Since the system has $N^2$ unknowns, the number of grid points (unknowns) quarters when increasing the grid size from $h$ to $2h$.
 
 Now we define an algorithm for the two-grid cycle. One such a cycle is a single iteration, so each cycle updates the solution vector. This cycle can be described as a function that takes the following input: 
 \begin{itemize}
@@ -287,7 +287,7 @@ The iteration with a two grid cycle shows much better convergence properties tha
 
 
 \section{Multigrid Components}
-In the two-grid cycle that has just been described, there are three major steps: presmoothing, coarse grid correction and postsmoothing. The smoothing procedures have already been discussed, but some of the components of the coarse grid correction need further explanation. 
+In the two-grid cycle, there are three major steps: presmoothing, coarse grid correction and postsmoothing. The smoothing procedures have already been discussed, but some of the components of the coarse grid correction need further explanation. 
 
 \subsection{Restriction}
 Step 2b) of the two-grid cycle is transferring the defect to a fine grid. Such a transition from one grid to another can be done in various ways. For our applications, transitions (either from coarse to fine or vice versa) always change the distance between two adjacent points by a factor of two. For the restriction, where only every other point of the fine grid is used, this means the grid changes from a $\Omega_{h}$ to a $\Omega_{2h} = \Omega_H$ grid, so the total number of grid points is quartered. Fig.~\ref{fig:mg_restriction} shows such a restriction. 
@@ -394,6 +394,7 @@ Fig.~\ref{fig:mg_prolongation} shows how the new grid points are calculated by a
 In order to solve the system $L_H v_h^m = \overline{d}_H^m$ from the two-grid cycle on the coarser grid, first the coarse grid operator $L_H$ has to be determined. Even though it only has to be calculated once and not in each iteration step, this can take a considerable ratio of the total time spent on the multigrid iteration. The coarse grid operator can be determined by either discretizing the grid again, or by performing the matrix multiplication
 \begin{equation}
 L_H = I_h^H L_h I_H^h
+\label{equ:galerkin}
 \end{equation}
 with the restriction and interpolation operators $I_h^H$ and $I_H^h$. When solving big problems of the Poisson equation, the matrices of this equation are all very big and very sparse, so efficient algorithms are needed. In fact, this multiplication was the part of the thesis where most practical work had to be done and existing algorithms were to be improved. These matrix multiplications will be extensively discussed in the next chapter. 
 
@@ -402,7 +403,7 @@ The steps 2a), 2c) and 2e) of the two-grid cycle have not been described yet. Fo
 
 \section{Multigrid Cycle}
 \label{sec:multigrid_cycle}
-The two-grid cycle that was discussed earlier has much better convergence properties than iterative solvers on their own. However, the convergence properties can still be further improved: In the two-grid cycle, the error $v_h^m$ is computed through solving the system $L_H v_H^m = d_H^m$. Since the iterative method for solving this system is again very suitable for smoothing, but not so much for making the error small, another coarse grid correction can be applied to the coarser grid instead of solving the coarse grid defect equation exactly.  The smoothing and coarse grid correction methods can be performed so often, that $L_H v_H^m = d_H$ is always applied to a grid of a certain size, e.g. a grid $\Omega_{\frac{1}{4}}$. That way, errors of errors are calculated and added to an error, until the finest error is added to the solution $u_h$. 
+The two-grid cycle that was discussed earlier has much better convergence properties than iterative solvers on their own. However, the convergence properties can still be further improved: In the two-grid cycle, the error $v_h^m$ is computed through solving the system $L_H v_H^m = d_H^m$ on the coarse grid. Since the iterative method for solving this system is again very suitable for smoothing, but not so much for making the error small, another coarse grid correction can be applied to the coarser grid instead of solving the coarse grid defect equation exactly.  The smoothing and coarse grid correction methods can be performed so often, that $L_H v_H^m = d_H$ is always applied to a grid of a certain size, e.g. a grid $\Omega_{\frac{1}{4}}$. That way, errors of errors are calculated and added to an error, until the finest error is added to the solution $u_h$. 
 
 Fig.~\ref{fig:mg_cycles} shows different multigrid cycles (one iteration each) for different numbers of grids and different cycle indices $\gamma$. The cycle index $\gamma$ tells how many two-grid iteration steps are performed. The cycles with $\gamma = 1$ are called V-cycles and the cycles with $\gamma = 2$ are called W-cycles.
 
@@ -447,7 +448,7 @@ Like the two-grid cycle, the multigrid cycle also comprises three basic steps an
 \item If $k>1$, call the multigrid function recursively, with $\gamma$ iterations and a zero vector as an initial approximation:
 \center $v_{k-1}^m$ = MG\_Cycle($k-1, \gamma, 0, L_{k-1}, \overline{d}_{k-1}^k, \nu_1, \nu_2) $
 \end{itemize}
-\item Transfer the error to a finer grid: $\hspace{25mm} v_k^m = I_{k-1}^k v_{k-1}^m$
+\item Transfer the error to a finer grid: $\hspace{29mm} v_k^m = I_{k-1}^k v_{k-1}^m$
 \item Compute a new approximation: $\hspace{29mm}   u_k^{new} = \overline{u}_k^m + v_k^m$
 \end{enumerate}
 \item \textbf{Postsmoothing:} The new approximation $u_k^{m+1}$ is obtained through smoothing $u_k^{new}$ for $\nu_2 \geq 0$ times.
@@ -470,7 +471,7 @@ As mentioned earlier, the relaxation methods offer different degrees of parallel
 
 In order to fully exploit the degree of parallelism of a fully parallel relaxation method (e.g. Jacobi smoothers), the hardware on which the problem is computed has as many computing cores as there are points in the grid\footnote{This is neither a realistic scenario for a fine grid, nor is this desirable due to network latencies.}. However, when the computation continues and reaches very coarse grids, the work cannot be split in a reasonable way to a high number of processors, so many processors stay idle for some time. The same thing can be said about the restriction and interpolation methods, so in some stages of the cycle the algorithm can be much more parallelized than in other stages.
 
-A stage of multigrid that can be very computationally intensive is the sparse matrix-matrix multiplication that is needed for the computation of linear operators $L_H$. This is also a step whose size depends on the current grid level and it can be  parallelized very well. In the next chapter, this matrix multiplication is illustrated in much detail.
+A stage of multigrid that can be very computationally intensive is the sparse matrix-matrix multiplication that is needed for the computation of linear operators $L_H$ (see Section~\ref{sec:PtAP}. This is also a step whose size depends on the current grid level and it can be  parallelized very well. In the next chapter, this matrix multiplication is illustrated in much detail.
 
 
 

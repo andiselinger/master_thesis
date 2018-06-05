@@ -1,11 +1,27 @@
 %
-% file: dedication.tex
-% author: V?ctor Bre?a-Medina
-% description: Contains the text for thesis dedication
+% File: abstract.tex
+% Author: V?ctor Bre?a-Medina
+% Description: Contains the text for thesis abstract
 %
+% UoB guidelines:
+%
+% Each copy must include an abstract or summary of the dissertation in not
+% more than 300 words, on one side of A4, which should be single-spaced in a
+% font size in the range 10 to 12. If the dissertation is in a language other
+% than English, an abstract in that language and an abstract in English must
+% be included.
 
-\chapter*{Dedication and acknowledgements}
-\begin{SingleSpace}
-\initial{H}ere goes the dedication.
-\end{SingleSpace}
+\chapter*{Kurzfassung}
+%\begin{SingleSpace}
+
+
+
+
+\initial{S}imulationen von elektrischen Feldern sind ein essentialler Teil der Entwicklung von Halbleitern. Diese Simulationen sind oft auf die Lösung der Poisson-Gleichung angewiesen, wobei manche Lösungsverfahren wiederum auf die Matrixmultiplikation zweier Matrizen angewiesen sind. Da die Matrizen, die bei solchen Simulationen entstehen viele Millionen bis Milliarden Zeilen und Spalten haben können, werden hocheffiziente Algorithmen benötigt, die das Problem auf vielen Prozessoren lösen. 
+
+Im Laufe dieser Arbeit wurden neue Algorithmen implementiert, sowohl für die sequentielle, wie auch für die parallele Multiplikation dünnbesetzter Matrizen. Dadurch konnten Performanceverbesserungen von bis zu 33\% erreicht werden. Der dafür eingesetzte neue Algorithmus greift dabei auf sequentielle Matrixmultiplikationen zurück, die auf vielen Prozessorkernen gleichzeitig ausgeführt werden. Dadurch spiegeln sich etwaige Verbesserungen sequentieller Algorithmen direkt in der parallelen Variante wider. 
+
+Da die Matrixmultiplikation ein wesentlicher Teil moderner Lösungsverfahren linearer Gleichungssysteme ist, wurden diese im Hinblick auf ihre Performance und Eignung für viele Prozessorkerne evaluiert. Dies liefert wichtige Erkenntnisse für die für die Wahl einer geeigneten Lösungsmethode.
+
+%\end{SingleSpace}
 \clearpage
