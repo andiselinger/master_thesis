@@ -10,7 +10,7 @@ MatMatMult_SeqAIJ_SeqAIJ_combined(Mat A, Mat B, Mat *C)
   // Allocate memory for the matrix C
   malloc(C);
   // Iterate over all rows of A (= over all rows of C)
-  for (i : rows of A )
+  for (i : rows of A)
   {
     // Do the symbolic and numeric calculations
     // Iterate over all non zero values in the current row of A
