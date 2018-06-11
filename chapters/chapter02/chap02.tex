@@ -60,12 +60,12 @@ The second observation is that a smooth error on a fine grid can be well approxi
 
 But what does high and low frequency actually mean? For that, we can express the error with a Fourier expansion as the sum of different sine waves:
 \begin{equation}
-v_h(x,y) = \sum_{k,l = 1}^{N-1} \alpha_{k,l} \sin k \pi x~ \sin l \pi y.
+v_h(x,y) = \sum_{k,l = 1}^{N-1} \alpha_{k,l} \sin (k \pi x)~ \sin ( l \pi y).
 \end{equation}
 
 We see, this error is a sum of eigenfunctions 
 \begin{equation}
-\varphi_h ^{k,l}(x,y) = \sin k \pi x~ \sin l \pi y \text{~~~~}(k,l = 1, \hdots, n-1)
+\varphi_h ^{k,l}(x,y) = \sin (k \pi x)~ \sin ( l \pi y) \text{~~~~}(k,l = 1, \hdots, n-1)
 \end{equation}
 of the discrete operator $L_h$ on the fine grid. Therefore, in that context, error smoothing means that low frequency components ($k$ and $l$ are small) are barely changed by smoothing iterations, while high frequency components ($k$ or $l$ is large) become small.
 
@@ -107,6 +107,7 @@ The Jacobi and the Gauss-Seidel iterations have already been described in the fi
 
 \subsection{Jacobi Relaxation}
 The ordering of grid points was assumed to already be selected when iterative methods were introduced in Chapter 1, so $u_h^m$ and $f_h^m$ were one dimensional vectors. Here however, we use the explicit two-dimensional indication of a point's position on the grid again. Then the Jacobi relaxation reads 
+
 \begin{align}
 z_h^{m+1}(x_i, y_i)&= \frac{1}{4} \Big ( h^2 f_h(x_i, y_i) + u_h^m(x_i-h, y_j) + u_h^m(x_i+h, y_j) \nonumber \\
                   &~~~~~~~~~~~~~~~~~~~~~~~~~~+ u_h^m(x_i, y_j-h) + u_h^m(x_i,y_j+h) \Big ) \\
@@ -139,11 +140,11 @@ S_h(\omega) = \frac{\omega}{4} \begin{bmatrix}
 
 The value of the relaxation parameter $\omega$ influences the smoothing properties of the relaxation method. In order to analyze this effect, we look at the eigenfunctions and eigenvalues of $S_h$. Since $S_h$ is a linear combination of $L_h$ and $I_h$, the eigenfunctions are the same as the ones of $L_h$:
 \begin{equation}
-\varphi_h ^{k,l}(x,y) = \sin k \pi x~ \sin l \pi y \text{~~~~}(k,l = 1, \hdots, n-1)
+\varphi_h ^{k,l}(x,y) = \sin (k \pi x)~ \sin (l \pi y) \text{~~~~}(k,l = 1, \hdots, n-1)
 \end{equation}
 with corresponding eigenvalues 
 \begin{equation}
-\chi_h^{k,l}(\omega) = 1- \frac{\omega}{2}(2-\cos k \pi h - \cos l \pi h).
+\chi_h^{k,l}(\omega) = 1- \frac{\omega}{2}(2-\cos (k \pi h) - \cos (l \pi h)).
 \label{equ:eigenvalues}
 \end{equation}
 
@@ -469,9 +470,9 @@ In order to get a high performance performance, it is necessary to parallelize t
 
 As mentioned earlier, the relaxation methods offer different degrees of parallelization: The Jacobi method is always fully parallelizable, while the lexicographical Gauss-Seidel method  has a can only run on up to $\sqrt{\#\Omega_h}$ processes at the same time and the red-black Gauss-Seidel iteration on $\frac{1}{2} \#\Omega_h$ processes. The idea of red-black ordering can also be generalized to multi-colour relaxations, which are also highly parallel \cite{Trottenberg:2000:MUL:374106}.
 
-In order to fully exploit the degree of parallelism of a fully parallel relaxation method (e.g. Jacobi smoothers), the hardware on which the problem is computed has as many computing cores as there are points in the grid\footnote{This is neither a realistic scenario for a fine grid, nor is this desirable due to network latencies.}. However, when the computation continues and reaches very coarse grids, the work cannot be split in a reasonable way to a high number of processors, so many processors stay idle for some time. The same thing can be said about the restriction and interpolation methods, so in some stages of the cycle the algorithm can be much more parallelized than in other stages.
+In order to fully exploit the degree of parallelism of a fully parallel relaxation method (e.g. Jacobi smoothers), all points of the grid are computed at the same time. However, when the computation continues and reaches very coarse grids, the work cannot be split in a reasonable way  to many tasks and the degree of parallelism decreases. The same thing can be said about the restriction and interpolation methods, so in some stages of the cycle the algorithm can be much more parallelized than in other stages.
 
-A stage of multigrid that can be very computationally intensive is the sparse matrix-matrix multiplication that is needed for the computation of linear operators $L_H$ (see Section~\ref{sec:PtAP}. This is also a step whose size depends on the current grid level and it can be  parallelized very well. In the next chapter, this matrix multiplication is illustrated in much detail.
+A stage of multigrid that can be very computationally intensive is the sparse matrix-matrix multiplication that is needed for the computation of linear operators $L_H$ (see Equation~(\ref{equ:galerkin})). This is also a step whose size depends on the current grid level and it can be  parallelized very well. In the next chapter, this matrix multiplication is illustrated in much detail.
 
 
 

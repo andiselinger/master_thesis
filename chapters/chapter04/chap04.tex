@@ -1,7 +1,7 @@
 \chapter{Experiments and Results}
-\initial{T}his chapter summarizes the results of the experiments that were performed in the course of this thesis. All results were obtained by employing the Vienna Science Cluster 3 (VSC-3) that was described in Section~\ref{sec:vsc3}. 
+\initial{T}his chapter summarizes the results of the experiments that were performed in the course of this thesis. All results were obtained by employing the Vienna Science Cluster 3 (VSC-3) that was described in Section~\ref{sec:vsc3}. The new algorithms were implemented in PETSc, a toolkit for scientific computations on supercomputers, and these implementations were compared 
 
-First the results of the matrix-matrix multiplication benchmarks are given, both for the sequential and the parallel case. For that, the newly implemented algorithms are analyzed in detail and compared to other algorithms. Afterwards, the performance of a method that falls back on those multiplications is explored, i.e. a dissection of multigrid performance is given.
+First the results of the matrix-matrix multiplication benchmarks are given, both for the sequential and the parallel case. For that, the newly implemented algorithms are analyzed in detail and compared to other algorithms which are implemented in PETSc (see Chapter 3). Afterwards, the performance of a method that relies on those multiplications is explored, i.e. a dissection of multigrid performance is given.
 
 \section{Sequential Matrix-Matrix Multiplication}
 
@@ -66,7 +66,7 @@ The same evaluation is now done with a medium-sized stencil, the 2d, 13-point st
 \end{figure}
 
 
-When using the big 3d, 27-point stencil, there are 27 non-zeros per row (out of 1.7 million entries per row for the largest tested grid). Now the trend of the \textit{scalable} and the \textit{rowmerge} algorithms continues (see Fig.~\ref{fig:seq3d27point}). The \textit{rowmerge} algorithms need around 25\% more time than the \textit{sorted} algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. This shows that the \textit{scalable} algorithm is only memory-wise scalable, but not performance-wise. The \textit{combined} algorithm, proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
+When using the big 3d, 27-point stencil, there are 27 non-zeros per row (out of 1.7 million entries per row for the largest tested grid). Now the trend of the \textit{scalable} and the \textit{rowmerge} algorithms continues (see Fig.~\ref{fig:seq3d27point}). The \textit{rowmerge} algorithms need around 25\% more time than the \textit{sorted} algorithm, while the execution time of the \textit{scalable} algorithm increases with the grid size. This behaviour reaches a point where the scalable algorithm needs 2.25 times longer the \textit{sorted} algorithm. This shows that the \textit{scalable} algorithm is only memory-wise scalable, but not performance-wise. The \textit{combined} algorithm proves to be the fastest algorithm for such a big grid, with a performance that is very similar to the \textit{sorted} performance. 
 
 \begin{figure}[tbp]
 	\centering
@@ -91,7 +91,7 @@ Since there is no separation of different stages for the \textit{combined} algor
 
 
 \section{The \textit{PtAP} Multiplication}
-Sometimes there are not only two matrices that have to be multiplied with each other, but three. An example is the (sparse) matrix product $C = P^T A P$ (Galerkin product) that was introduced in Section~\ref{sec:PtAP}. This can either be computed directly, or by performing one of the naive approaches $C = (P^T A) P$ or $C = P^T (A P)$. The direct algorithm works by first calling a method to transpose $P$, and then calculates the product $C = P^T AP$.
+Sometimes there are not only two matrices that have to be multiplied with each other, but three. An example is the (sparse) matrix product $C = P^T A P$ (Galerkin product) that was introduced in Section~\ref{sec:PtAP} as $L_H = I_h^H L_h I_H^h$ (Equation (\ref{equ:galerkin})), with $I_H^h = (I_h^H)^T = P$. This can either be computed directly, or by performing one of the naive approaches $C = (P^T A) P$ or $C = P^T (A P)$. The direct algorithm works by first calling a method to transpose $P$, and then calculates the product $C = P^T AP$.
 
 The results can be seen in Fig.~\ref{fig:ex2_ptap}. Since the results are so similar to each other, a high accuracy was necessary here, which was obtained by taking the median value of 41 measurements.
 
@@ -114,7 +114,7 @@ Since the performance differences are so small, it was decided that no further o
 Now that the sequential matrix-matrix multiplication has been analyzed, we continue with evaluating the parallel version. For this version, there are two existing implementations: a scalable one and a non-scalable one. Similar to the sequential algorithm, the array with the array indices that refer to non-zero entries is of variable size for the scalable algorithm and of fixed size (only dependent on the number of columns in the matrix) for the non-scalable algorithm. Since the matrices are divided among the processes in a way where complete rows are  associated with a process, this fixed sized array for the non-scalable implementation has a length that is equal to the number of columns in the matrix $B$. 
 
 \subsection{A Basis for a New Implementation}
-In order to see if the new implementation in this thesis (see Section~\ref{sec:seq_mpi}) should be based on a scalable or non-scalable approach, their performance had to be evaluated. Fig.~\ref{fig:scalable} shows the results of a matrix-matrix multiplication with 8 processes for a 3d, 27-point stencil and different local grid sizes. For the smallest tested grid, the \textit{scalable} algorithm is already ca. 70\% slower than the non-scalable algorithm. With bigger grids, this difference increases very quickly: For the biggest tested grid, the \textit{scalable} version is already 30 times slower than the \textit{nonscalable} implementation. This biggest tested grid of local size $60 \times 60 \times 60$ (this corresponds to a global size of $120\times 120 \times 120$ for 8 processes) is still much smaller than other grids that were tested with the \textit{nonscalable} algorithm. However, even with data limited to small and medium sized grids, it is obvious that the \textit{scalable} algorithm is not a reasonable choice for big systems. 
+In order to see if the new implementation in this thesis (see Section~\ref{sec:seq_mpi}) should be based on a scalable or non-scalable approach, their performance had to be evaluated. Fig.~\ref{fig:scalable} shows the results of a matrix-matrix multiplication with 8 processes for a 3d, 27-point stencil and different local grid sizes. For the smallest tested grid, the \textit{scalable} algorithm is already about 70\% slower than the non-scalable algorithm. With bigger grids, this difference increases very quickly: For the biggest tested grid, the \textit{scalable} version is already 30 times slower than the \textit{nonscalable} implementation. This biggest tested grid of local size $60 \times 60 \times 60$ (this corresponds to a global size of $120\times 120 \times 120$ for 8 processes) is still much smaller than other grids that were tested with the \textit{nonscalable} algorithm. However, even with data limited to small and medium sized grids, it is obvious that the \textit{scalable} algorithm is not a reasonable choice for big systems. 
 
 The reason for this lack in performance for the \textit{scalable} algorithm lies in the fact that new memory has to be allocated for new column indices very often, which is extremely expensive. Since the \textit{nonscalable} implementation performs so much better, the new implementation is based on a non-scalable approach. 
 
@@ -131,7 +131,7 @@ The existing \textit{nonscalable} algorithm (see Section~\ref{sec:existing_impl}
 \subsubsection*{2d stencils}
 Fig.~\ref{fig:mat_ex_test_ex2_times_2d} shows the results for different 2d stencils and for 32 processes (4 nodes with 8 processes each). 
 
-It can be seen that the time per unknown remains quite constant for large grids. Only for small grids, considerably more time is needed because latencies oppress the performance.
+It can be seen that the time per unknown remains almost constant for large grids. Only for small grids, considerably more time is needed because latencies reduce the performance.
 
 
 For the very small 2d, 5-point stencil the \textit{nonscalable} version is quicker than the \textit{seq mpi} version for all tested grid sizes. The absolute time difference between the two versions and the time per unknown are both remarkably constant. 
@@ -279,7 +279,7 @@ However, the result of 42\% was obtained with an extremely small matrix. For big
 \end{figure}
 
 \subsubsection*{Conclusion of this section}
-Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the matSetVal routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For matSetVal, the results show a high potential for obtaining better performance through optimizations.
+Overall, these pie charts show that the biggest amount of time is usually spent on the sequential matrix multiplication $A_{\textrm{loc, diag~}} B_{\textrm{loc, diag}}$ and on the MatSetVal routine, so any further optimizations here are of great value. The multiplication has already been attacked by analyzing the sequential matrix multiplication and choosing the fastest implementation, but of course there is still plenty of space for further optimizations. For MatSetVal, the results show a high potential for obtaining better performance through optimizations.
 
 
 \subsection{Time Ratio: Symbolic Calculation to Total Time}

@@ -226,7 +226,7 @@ f)\\
 The implementation of the \textit{scalable} matrix-matrix multiplication does not need a dense array with a length that only depends on the number of columns. Instead, there is a dynamic data structure, such as a linked list, a heap or some other binary tree that stores only the indices of non-zero entries. For that reason, the memory requirements are much lower than for the \textit{sorted} implementation and these requirements scale with the number of non-zeros. If the non-scalable implementation is used with, for example, a matrix $B$ that has one billion columns and 32-bit integer values are used, this means that 4~GB of data are needed on each MPI-rank just for the dense array. On the other hand, only non-zero indices are stored in the scalable implementation.
 
 In Fig.~\ref{fig:spgemm-scalable_1} and Fig.~\ref{fig:spgemm-scalable_2}, this algorithm is illustrated with the example of a sorted linked list. The steps of the algorithm are:
-
+\vspace*{-15mm}
 \begin{enumerate}[label=\alph*)]
 \item The rows $b_j$ are shown in green with a dashed frame again. Starting in the first row, the index 1 of the first element is added to a linked list. 
 \item Next, the index 3 is added to this linked list.
@@ -367,7 +367,7 @@ On the other hand, if there are any off-diagonal elements in $A$, the process ha
 \centering
 \vspace{5mm}
 {\includegraphics[width=0.95\textwidth]{parallel/spgemm-parallel-2}}
-\caption{If there are off-diagonal elements in $A$, the process has to retrieve rows of $B$ from other processes. Figures by Karl Rupp \cite{karli_LANS_image}.}
+\caption{If there are off-diagonal elements in $A$, the process has to retrieve rows of $B$ from other processes. Figure by Karl Rupp \cite{karli_LANS_image}.}
 \label{fig:parallel-2}
 \end{figure}
 
